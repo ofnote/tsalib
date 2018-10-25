@@ -10,7 +10,9 @@ def arith_op (op, s1, s2):
         res = s1 + s2
     elif op == 'mul':
         res = s1 * s2
-    elif op == 'div':
+    elif op == 'truediv':
+        res = s1 / s2  
+    elif op == 'floordiv':
         res = s1 // s2  
     else:
         return NotImplemented
@@ -30,10 +32,10 @@ class TS:
             self.e = v
 
     def __add__(self, n): return arith_op('add', self, n)
-
     def __mul__(self, n): return arith_op('mul', self, n)
-
-    def __div__(self, n): return arith_op('div', self, n)
+    def __floordiv__(self, n): return arith_op('floordiv', self, n)
+    #truediv: '/' provided for convenience
+    def __truediv__(self, n): return arith_op('truediv', self, n)
 
     def __eq__(self, d):
         assert isinstance(d, TS)

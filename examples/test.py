@@ -5,9 +5,15 @@ from tsalib.ts_lite import TSLite
 from tsalib.ts import TS, declare_base_shapes
 
 B, D, V, Dh, Te, Td, Ci, Co = declare_base_shapes()
+
 H = TS('Height')
 W = TS('Width')
 C = TS('Channels')
+
+
+'''
+Annotation using the light version of tsalib: barebones, no dependencies at all
+'''
 
 def testlite():
 
@@ -28,14 +34,16 @@ def testlite():
     print((2, B, D))
 
 
+
+'''
+Annotation using the generic version of tsalib
+'''
 def test():
     B = TS('Batch')
     T = TS('Time')  #time along encoder
     D = TS('Dim')  #embedding dim
     V = TS('Vocab')
     Dh = TS('HiddenDim')  #hidden dim inside encoder/decoder
-    Td = TS('DecoderTime')  #time along decoder
-    Dl = TS('LangEmbDim')  #embedding dim
 
     import torch
     a: (B, D) = torch.Tensor([[1., 2.], [3., 4.]])
@@ -43,7 +51,9 @@ def test():
     b: (2, B, D) = torch.stack([a, a])
     print(b.size())
     K = D * 2
-    print((2, B, K))
+
+    var1 = 2
+    print((2, B // 2, K, var1))
 
 
 

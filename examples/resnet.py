@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
+# Original file: https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
+# Updated to add shape annotations (BasicBlock and ResNet modules)
+
 import sys
 sys.path.append('../')
 from tsalib.ts import TS, declare_base_shapes
