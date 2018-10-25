@@ -93,9 +93,11 @@ class Attention(torch.nn.Module):
         self.resid_dropout = torch.nn.Dropout(config.residual_dropout_probability)
 
     def _attn(self, q: (B,H,T,D), k: (B,H,D,T), v: (B,H,T,D)) -> torch.Tensor:
-        w: (B,H,T,T) = torch.matmul(q, k)
+        w: (B,H,T,T) = torch.matmul(q, k) #similarities
         if self.scale:
-            w = w / math.sqrt(v.size(-1))
+            w = w / math.sqrt(v.size(-1)) #scaled similarities
+
+        #adding positional encodings?
         w: (B,H,T,T) = w * self.b + -1e9 * (1 - self.b)  # TF implem method: mask_attn_weights
         w: (B,H,T,T) = torch.nn.Softmax(dim=-1)(w)
         w: (B,H,T,T) = self.attn_dropout(w)
