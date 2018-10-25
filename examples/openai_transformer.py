@@ -2,6 +2,8 @@
 # only selected modules copied and annotated in this file
 # some parts re-written to clarify tensor shapes
 
+# Note how TSAs help: a glance through the forward function exposes the functionality of the module
+
 from typing import NamedTuple, List
 import copy
 import io
