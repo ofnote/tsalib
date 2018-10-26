@@ -22,6 +22,15 @@ from allennlp.common.checks import ConfigurationError
 from allennlp.common.file_utils import cached_path
 from allennlp.common.from_params import FromParams
 
+
+import sys
+sys.path.append('../')
+from tsalib.ts import TS
+B = TS('Batch')
+T = TS('Seq Length')
+D = TS('Embedding dimension')
+H = TS('Number of Heads')
+
 def gelu(x: torch.Tensor) -> torch.Tensor:
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
@@ -112,12 +121,13 @@ class Attention(torch.nn.Module):
         return res
 
     def split_heads(self, x: (B, T, D), k: bool = False):
-        new_x_shape = x.size()[:-1] + (self.n_head, x.size(-1) // self.n_head)
-        x: (B, T, self.n_head, D//self.n_head) = x.view(*new_x_shape)  # in Tensorflow implem: fct split_states
+        H = self.n_head
+        new_x_shape = x.size()[:-1] + (H, x.size(-1) // H)
+        x: (B, T, H, D//H) = x.view(*new_x_shape)  # in Tensorflow implem: fct split_states
         if k:
-            ret: (B, self.n_head, D // self.n_head, T) = x.permute(0, 2, 3, 1)
+            ret: (B, H, D // H, T) = x.permute(0, 2, 3, 1)
         else:
-            ret: (B, self.n_head, T, D // self.n_head) = x.permute(0, 2, 1, 3)
+            ret: (B, H, T, D // H) = x.permute(0, 2, 1, 3)
 
         return ret
 
@@ -130,7 +140,7 @@ class Attention(torch.nn.Module):
         key: (B, T, D) = qkv[1]
         value: (B, T, D) = qkv[2]
         
-        H = self.n_head
+        H = H
 
         query: (B, H, T, D // H) = self.split_heads(query)
         key: (B, H, D//H, T) = self.split_heads(key, k=True)

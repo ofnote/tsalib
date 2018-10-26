@@ -20,12 +20,16 @@ The `tsalib` library comes to your rescue here. It allows you to label tensor va
 
 ## Getting Started
 
-See `examples/test.py`.
-
+See [examples/test.py](examples/test.py) to get started. The [examples](examples) directory also contains more complex annotated examples: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
 
 ## Dependencies
 
-Python >= 3.6. Allows harmless type annotations for variables. These annotations do not affect the program performance in any way. 
+Python >= 3.6. Allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 `sympy`. A library for building symbolic expressions in Python.
+
+## Installation
+
+`pip install tsalib`
+
 

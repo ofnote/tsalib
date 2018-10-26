@@ -1,6 +1,8 @@
 import sys
 sys.path.append('../')
 
+#from typing import List, Sequence, TypeVar
+
 from tsalib.ts_lite import TSLite
 from tsalib.ts import TS, declare_base_shapes
 

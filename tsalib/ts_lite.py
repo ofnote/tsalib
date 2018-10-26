@@ -1,5 +1,3 @@
-#from typing import Sequence, TypeVar
-from typing import List
 
 
 class TSLite:
