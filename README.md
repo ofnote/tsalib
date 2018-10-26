@@ -22,7 +22,9 @@ The `tsalib` library comes to your rescue here. It allows you to label tensor va
 * Faster debugging: if you annotate-as-you-go, the tensor variable shapes are always explicit in code. No more adhoc shape `print`s when debugging shape errors. 
 
 ## Getting Started
-    
+
+See [tests/test.py](tests/test.py) to get started quickly.
+
 ```python
 from tsalib import TS, decl_dim_vars
 import numpy as np
@@ -35,14 +37,14 @@ B, C, H, W = decl_dim_vars('Batch Channels Height Width')
 #now build expressions over dimension variables and annotate tensor variables
 
 a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]])
-print(f'original array: {(B,D)}: {a.shape}')
+print(f'original array: {(B,D)}: {a.shape}') #(Batch, EmbedDim): (2, 3)
 
 b: (2, B, D) = np.stack([a, a])
-print(f'after stack: {(2,B,D)}: {b.shape}')
+print(f'after stack: {(2,B,D)}: {b.shape}') #(2, Batch, EmbedDim): (2, 2, 3)
 
 ax = (2,B,D).index(B) #ax = 1
 c: (2, D) = np.mean(b, axis=ax) 
-print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}')
+print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
 ```
 
 Arithmetic over shapes is supported:
@@ -56,11 +58,10 @@ Shapes can be manipulated like ordinary `tuples`:
 
 ```python 
 S = (B, C*2, H, W)
-print (S[:-2])
+print (S[:-2]) #(Batch, 2*Channels)
 ```
-prints `(Batch, 2*Channels)`  
 
-See [tests/test.py](tests/test.py) to get started quickly. The [examples](examples) directory contains complex multi-module networks annotated with TSAs: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
+ The [examples](examples) directory contains complex multi-module networks annotated with TSAs: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
 
 ## Dependencies
 
