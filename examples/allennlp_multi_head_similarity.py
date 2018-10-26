@@ -6,10 +6,10 @@ import sys
 sys.path.append('../')
 from tsalib.ts import TS
 B = TS('Batch')
-T = TS('Seq Length')
-D1 = TS('Tensor 1 dimension')
-D2 = TS('Tensor 2 dimension')
-Dp = TS('Projected dimension')
+T = TS('SeqLength')
+D1 = TS('Tensor1Dim')
+D2 = TS('Tensor2Dim')
+Dp = TS('ProjectedDim')
 
 from overrides import overrides
 import torch
@@ -87,7 +87,7 @@ class MultiHeadedSimilarity(SimilarityFunction):
     @overrides
     def forward(self, tensor_1: (B, T, D1), tensor_2: (B, T, D1)) :
         H = self.num_heads
-        
+
         projected_tensor_1: (B, T, Dp) = torch.matmul(tensor_1, self._tensor_1_projection)
         projected_tensor_2: (B, T, Dp) = torch.matmul(tensor_2, self._tensor_2_projection)
 

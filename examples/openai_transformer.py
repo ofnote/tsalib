@@ -25,11 +25,11 @@ from allennlp.common.from_params import FromParams
 
 import sys
 sys.path.append('../')
-from tsalib.ts import TS
+from tsalib import TS
 B = TS('Batch')
-T = TS('Seq Length')
-D = TS('Embedding dimension')
-H = TS('Number of Heads')
+T = TS('SeqLength')
+D = TS('EmbeddingDimension')
+H = TS('NumHeads')
 
 def gelu(x: torch.Tensor) -> torch.Tensor:
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))

@@ -6,21 +6,51 @@ The `tsalib` library comes to your rescue here. It allows you to label tensor va
 
 * Because shapes can be dynamic, you can write `symbolic` shape expressions over named dimension variables, e.g., 
 
-    `v : (B, C, H, W) = torch.randn(batch_size, channels, h, w)`
+    ```python
+    v: (B, C, H, W) = torch.randn(batch_size, channels, h, w)
+    v: (B, C, H//2, W//2) = maxpool(v)
 
-    Here `B`, `C`, `H`, `W` are pre-defined named dimension variables. It is easy to define new named dimensions customized to your architecture. Of course, use constant values if one or more dimensions remain fixed for all inputs.
+    ```
+
+    Here `B`, `C`, `H`, `W` are pre-defined named dimension variables. It is easy to define new named dimensions customized to your network architecture. Of course, use constant values if one or more dimensions are always fixed.
 
     `v : (B, 64, H, W) = torch.randn(batch_size, 64, h, w)`
 
-* Arithmetic over shapes is supported
-
-    `x : (B, C * 2, H/2, W/2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v)`
 
 * Works seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `tensorflow`, `mxnet`, etc. 
 
 ## Getting Started
+    
+```python
+from tsalib import TS, decl_dim_vars
+import numpy as np
 
-See [examples/test.py](examples/test.py) to get started. The [examples](examples) directory also contains more complex annotated examples: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
+#declare named dimension variables
+B, C, H, W = TS('Batch'), TS('Channels'), TS('Height'), TS('Width')
+#or
+B, C, H, W = decl_dim_vars('Batch', 'Channels', 'Height', 'Width')
+
+#now build expressions over dimension variables and annotate tensor variables
+
+a: (B, D) = np.array([[1., 2.], [3., 4.]])
+print(f'{(B,D)}: {a.shape}')
+b: (2, B, D) = np.stack([a, a])
+print(f'{(2,B,D)}: {b.shape}')
+```
+
+Arithmetic over shapes is supported:
+
+``` x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v) ```
+
+Shapes can be manipulated like ordinary `tuples`:
+
+```python 
+S = (B, C*2, H, W)
+print (S[:-2])
+```
+prints `(Batch, 2*Channels)`  
+
+See [examples/test.py](examples/test.py) to get started quickly. The [examples](examples) directory also contains more complex annotated networks: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
 
 ## Dependencies
 

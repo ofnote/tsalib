@@ -3,64 +3,44 @@ sys.path.append('../')
 
 #from typing import List, Sequence, TypeVar
 
-from tsalib.ts_lite import TSLite
-from tsalib.ts import TS, declare_base_shapes
+from tsalib import TS, declare_common_dim_vars, decl_dim_vars
 
-B, D, V, Dh, Te, Td, Ci, Co = declare_base_shapes()
-
-H = TS('Height')
-W = TS('Width')
-C = TS('Channels')
+# definitions in tsalib/ts.py
+B, D, V, Dh, T, Te, Td, C, Ci, Co = declare_common_dim_vars()
+H, W = decl_dim_vars ('Height Width')
 
 
-'''
-Annotation using the light version of tsalib: barebones, no dependencies at all
-'''
+def test_numpy():
+    import numpy as np
+    a: (B, D) = np.array([[1., 2.], [3., 4.]])
+    print(f'{(B,D)}: {a.shape}')
+    b: (2, B, D) = np.stack([a, a])
+    print(f'{(2,B,D)}: {b.shape}')
 
-def testlite():
-
-    B = TSLite('Batch')
-    T = TSLite('EncoderTime')  #time along encoder
-    D = TSLite('Dim')  #embedding dim
-    V = TSLite('Vocab')
-    Dh = TSLite('HiddenDim')  #hidden dim inside encoder/decoder
-    Td = TSLite('DecoderTime')  #time along decoder
-
-    import torch
-    a: (B, D) = torch.Tensor([[1., 2.], [3., 4.]])
-    print(a.size())
-    b: (2, B, D) = torch.stack([a, a])
-    print(b.size())
-
-    K = D * 2
-    print((2, B, D))
+    # Supports arithmetic over dim vars and other Python variables
+    K = W * 2
+    var1 = 10
+    print((4, H // 4, K, var1))
 
 
-
-'''
-Annotation using the generic version of tsalib
-'''
-def test():
-    B = TS('Batch')
-    T = TS('Time')  #time along encoder
-    D = TS('Dim')  #embedding dim
-    V = TS('Vocab')
-    Dh = TS('HiddenDim')  #hidden dim inside encoder/decoder
+def test_pytorch():
 
     import torch
     a: (B, D) = torch.Tensor([[1., 2.], [3., 4.]])
-    print(a.size())
+    print(f'{(B,D)}: {a.size()}')
     b: (2, B, D) = torch.stack([a, a])
-    print(b.size())
-    K = D * 2
+    print(f'{(2,B,D)}: {b.size()}')
 
-    var1 = 2
-    print((2, B // 2, K, var1))
+
+    # Supports arithmetic over dim vars and other Python variables
+    K = W * 2
+    var1 = 10
+    print((4, H // 4, K, var1))
 
 
 
 
 if __name__ == '__main__':
-    #testlite() 
-    test()
+    test_numpy()
+    test_pytorch()
    

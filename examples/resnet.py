@@ -13,7 +13,7 @@ B, D, V, Dh, Te, Td, Ci, Co = declare_base_shapes()
 H = TS('Height')
 W = TS('Width')
 C = TS('Channels')
-Ex = TS('Block Expansion')
+Ex = TS('BlockExpansion')
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -151,19 +151,19 @@ class ResNet(nn.Module):
 
     def forward(self, x: (B, 3, H, W)): #H = W = 224
 
-        x: (B, 64, H/2, W/2) = self.conv1(x)
+        x: (B, 64, H//2, W//2) = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x: (B, 64, H/4, W/4) = self.maxpool(x)
+        x: (B, 64, H//4, W//4) = self.maxpool(x)
 
-        x: (B, 64*Ex, H/4, W/4) = self.layer1(x)
-        x: (B, 128*Ex, H/8, W/8) = self.layer2(x)
-        x: (B, 256*Ex, H/16, W/16) = self.layer3(x)
-        x: (B, 512*Ex, H/32, W/32) = self.layer4(x)
+        x: (B, 64*Ex, H//4, W//4) = self.layer1(x)
+        x: (B, 128*Ex, H//8, W//8) = self.layer2(x)
+        x: (B, 256*Ex, H//16, W//16) = self.layer3(x)
+        x: (B, 512*Ex, H//32, W//32) = self.layer4(x)
 
         x: (B, 512*Ex, 1, 1) = self.avgpool(x)
-        x: (B, 512) = x.view(x.size(0), -1)
-        x: (B * Ex, num_classes) = self.fc(x)
+        x: (B, 512*Ex) = x.view(x.size(0), -1)
+        x: (B, num_classes) = self.fc(x)
 
         return x
 
