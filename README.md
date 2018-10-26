@@ -4,7 +4,7 @@ Writing programs which manipulate tensors (e.g., using `numpy`, `pytorch`, `tens
 
 The `tsalib` library comes to your rescue here. It allows you to label tensor variables with their shapes directly in the code, as *first-class* type annotations. Shape annotations turn out to be useful in many ways. They help you quickly cross-check the variable shapes when writing new transformations or modifying existing modules. Moreover, the annotations serve as useful documentation to guide others trying to understand or extend your module.
 
-* Because shapes can be dynamic, you can write `symbolic` shape expressions over named dimension variables, e.g., 
+* Because shapes can be dynamic, you can annotate with `symbolic` shape expressions over named dimension variables, e.g., 
 
     ```python
     v: (B, C, H, W) = torch.randn(batch_size, channels, h, w)
@@ -19,6 +19,8 @@ The `tsalib` library comes to your rescue here. It allows you to label tensor va
 
 * Works seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `tensorflow`, `mxnet`, etc. 
 
+* Faster debugging: if you annotate-as-you-go, the tensor variable shapes are always explicit in code. No more adhoc shape `print`s when debugging shape errors. 
+
 ## Getting Started
     
 ```python
@@ -28,19 +30,27 @@ import numpy as np
 #declare named dimension variables
 B, C, H, W = TS('Batch'), TS('Channels'), TS('Height'), TS('Width')
 #or
-B, C, H, W = decl_dim_vars('Batch', 'Channels', 'Height', 'Width')
+B, C, H, W = decl_dim_vars('Batch Channels Height Width')
 
 #now build expressions over dimension variables and annotate tensor variables
 
-a: (B, D) = np.array([[1., 2.], [3., 4.]])
-print(f'{(B,D)}: {a.shape}')
+a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]])
+print(f'original array: {(B,D)}: {a.shape}')
+
 b: (2, B, D) = np.stack([a, a])
-print(f'{(2,B,D)}: {b.shape}')
+print(f'after stack: {(2,B,D)}: {b.shape}')
+
+ax = (2,B,D).index(B) #ax = 1
+c: (2, D) = np.mean(b, axis=ax) 
+print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}')
 ```
 
 Arithmetic over shapes is supported:
 
-``` x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v) ```
+```python
+v: (B, C, H, W) = torch.randn(batch_size, channels, h, w)
+x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v) 
+```
 
 Shapes can be manipulated like ordinary `tuples`:
 
@@ -50,7 +60,7 @@ print (S[:-2])
 ```
 prints `(Batch, 2*Channels)`  
 
-See [examples/test.py](examples/test.py) to get started quickly. The [examples](examples) directory also contains more complex annotated networks: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
+See [tests/test.py](tests/test.py) to get started quickly. The [examples](examples) directory contains complex multi-module networks annotated with TSAs: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py)
 
 ## Dependencies
 
@@ -61,5 +71,14 @@ Python >= 3.6. Allows optional type annotations for variables. These annotations
 ## Installation
 
 `pip install tsalib`
+
+## References
+
+* A [proposal](https://docs.google.com/document/d/1vpMse4c6DrWH5rq2tQSx3qwP_m_0lyn-Ij4WHqQqRHY/edit#heading=h.rkj7d39awayl) for designing a tensor library with named dimensions from ground-up. The TSA library takes care of some use cases, without requiring any change in the tensor libraries.
+* Pytorch Issue on Names Axes [here](https://github.com/pytorch/pytorch/issues/4164).
+
+## Contributors
+
+Nishant Sinha, OffNote Labs
 
 

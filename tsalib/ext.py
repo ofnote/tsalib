@@ -1,8 +1,4 @@
-from ts import TS
-
-B = TS('Batch')
-T = TS('SeqLength')
-D = TS('EmbeddingDim')
+from tsalib.ts import TS
 
 
 def view_transform (src, to, in_shape):
@@ -38,17 +34,6 @@ def permute_transform(src, to):
 
 
 
-if __name__ == '__main__':
-    H = 5
-
-    res = view_transform(src=(B,T,D), to=(B,T,H,D//H), in_shape=(20,10,300))
-    print (res)
-
-    res = permute_transform(src=(B,T,D), to=(D,T,B))
-    print (res)
-
-    S = (B, T*2, D, D) 
-    print (S[:-2])
 
 
 

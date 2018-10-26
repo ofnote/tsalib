@@ -49,7 +49,8 @@ class TS:
     def __truediv__(self, n): return arith_op('truediv', self, n)
 
     def __eq__(self, d):
-        assert isinstance(d, TS)
+        #TODO: being conservative here, may need to generalize this
+        if not isinstance(d, TS): return False
         return self.e == d.e    
 
     def __repr__(self):

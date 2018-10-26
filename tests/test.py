@@ -12,15 +12,20 @@ H, W = decl_dim_vars ('Height Width')
 
 def test_numpy():
     import numpy as np
-    a: (B, D) = np.array([[1., 2.], [3., 4.]])
-    print(f'{(B,D)}: {a.shape}')
+    a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]])
+    print(f'original array: {(B,D)}: {a.shape}')
+    
     b: (2, B, D) = np.stack([a, a])
-    print(f'{(2,B,D)}: {b.shape}')
+    print(f'after stack: {(2,B,D)}: {b.shape}')
 
-    # Supports arithmetic over dim vars and other Python variables
+    ax = (2,B,D).index(B)
+    c: (2, D) = np.mean(b, axis=ax)
+    print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}')
+
+    # Supports arithmetic over a combination of dim vars and other Python variables
     K = W * 2
     var1 = 10
-    print((4, H // 4, K, var1))
+    print((...,4, H // 4, K, var1))
 
 
 def test_pytorch():
