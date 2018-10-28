@@ -1,14 +1,18 @@
 # Tensor Shape Annotation Library (tsalib)
 
-Writing programs which manipulate tensors (e.g., using `numpy`, `pytorch`, `tensorflow`, ..) requires you to carefully keep track of shapes of tensor variables. Carrying around the shapes in your head gets increasingly hard as programs become more complex, e.g., when creating a new `RNN` cell or designing a new kind of `attention` mechanism or trying to do a surgery of non-trivial pre-trained architectures (`resnet101`, `densenet`). There is no principled way of shape tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes.
+The Tensor Shape Annotation (TSA) library enables first-class, embedded annotations of tensor variables. These annotations improve developer productivity, accelerate debugging and enhance code readability. Detailed blog article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
-The `tsalib` module comes to our rescue here. It allows us to label tensor variables with their shapes directly in the code, as *first-class* type annotations. Shape annotations turn out to be useful in many ways. They help us to quickly cross-check the variable shapes when writing new transformations or modifying existing modules. Moreover, the annotations serve as useful documentation to guide others trying to understand or extend your module.
+## Introduction
+
+Writing deep learning programs which manipulate tensors (e.g., using `numpy`, `pytorch`, `keras`, `tensorflow`, ..) requires you to carefully keep track of shapes of tensor variables. Carrying around the shapes in your head gets increasingly hard as programs become more complex, e.g., when creating a new `RNN` cell or designing a new kind of `attention` mechanism or trying to do a surgery of non-trivial pre-trained architectures (`resnet101`, `densenet`). There is no principled way of shape tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes.
+
+`tsalib` comes to our rescue here. It allows us to label tensor variables with their shapes directly in the code, as *first-class* type annotations. Shape annotations turn out to be useful in many ways. They help us to quickly cross-check the variable shapes when *debugging* or writing new transformations or modifying existing modules. Moreover, the annotations serve as useful documentation to help others in understanding or extending your module.
 
 * Because shapes can be dynamic, annotate tensors with `symbolic` shape expressions over named dimension variables, with arithmetic:
 
     ```python
     v: (B, C, H, W) = torch.randn(batch_size, channels, h, w)
-    v: (B, C, H//2, W//2) = maxpool(v)
+    v: (B, C, H // 2, W // 2) = maxpool(v)
 
     ```
 
@@ -17,22 +21,22 @@ The `tsalib` module comes to our rescue here. It allows us to label tensor varia
     `v : (B, 64, H, W) = torch.randn(batch_size, 64, h, w)`
 
 
-* Works seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `tensorflow`, `mxnet`, etc. Use TSAs to improve clarity everywhere, e.g., even in your machine learning data pipelines.
+* Works seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc. Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 
-* Faster debugging: if you annotate-as-you-go, the tensor variable shapes are explicit in code, always available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors. 
+* Faster debugging: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors. 
 
 ## Getting Started
 
 See [tests/test.py](tests/test.py) to get started quickly.
 
 ```python
-from tsalib import TS, decl_dim_vars
+from tsalib import dim_var as dv, dim_vars as dvs
 import numpy as np
 
 #declare named dimension variables
-B, C, H, W = TS('Batch'), TS('Channels'), TS('Height'), TS('Width')
+B, C, H, W = dv('Batch'), dv('Channels'), dv('Height'), dv('Width')
 #or
-B, C, H, W = decl_dim_vars('Batch Channels Height Width')
+B, C, H, W = dvs('Batch Channels Height Width')
 
 #now build expressions over dimension variables and annotate tensor variables
 
@@ -42,7 +46,9 @@ print(f'original array: {(B,D)}: {a.shape}') #(Batch, EmbedDim): (2, 3)
 b: (2, B, D) = np.stack([a, a])
 print(f'after stack: {(2,B,D)}: {b.shape}') #(2, Batch, EmbedDim): (2, 2, 3)
 
-ax = (2,B,D).index(B) #ax = 1
+#use dim vars to write better code
+
+ax = (2, B, D).index(B) #ax = 1
 c: (2, D) = np.mean(b, axis=ax) 
 print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
 ```
@@ -61,7 +67,9 @@ S = (B, C*2, H, W)
 print (S[:-2]) #(Batch, 2*Channels)
 ```
 
- The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py).
+## Examples
+
+ The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py). With TSAs, the `forward` function gives a deeper insight into how the module works. 
 
 ## Dependencies
 
@@ -76,23 +84,21 @@ Python >= 3.6. Allows optional type annotations for variables. These annotations
 ## Going further
 Once we have named dimensions in the code, we can exploit them to further improve code productivity and clarity.
 
-* Avoid explicit shape computations for `reshaping`. Use `tsalib.ext.view_transform` to specify view changes declaratively.
+* Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` to specify view changes declaratively.
 
 ```python
-    x = np.ones((20, 10, 100))
-    print (f'For x ({x.shape}):\n Transforming view {(B,T,D)} to {(B,T,H,D//H)} ')
-    new_shape = view_transform(src=(B,T,D), to=(B,T,H,D//H), in_shape=x.shape)
-    x = x.reshape(new_shape)
-    print (f'After transform, x : {x.shape}')
+    x = np.ones((20, 10, 300))
+    new_shape = view_transform(src=(B,T,D), to=(B,T,4,D//4), in_shape=x.shape)
+    x = x.reshape(new_shape) #(20, 10, 300) -> (20, 10, 4, 75)
 ```
 
-* Similarly, use `tsalib.ext.permute_transform` to compute permutation index order from a declarative spec. 
+* Similarly, use `tsalib.permute_transform` to compute permutation index order from a declarative spec. 
 ```python 
     perm_indices = permute_transform(src=(B,T,D), to=(D,T,B))
-    x = x.transpose(perm_indices)
+    x = x.transpose(perm_indices) #(10, 50, 300) -> (300, 50, 10)
 ```
 
-See [tests/test_ext.py](tests/test_ext.py).
+See [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 ## References
 
@@ -103,6 +109,6 @@ See [tests/test_ext.py](tests/test_ext.py).
 
 ## Contributors
 
-Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @twitter(https://twitter.com/ekshakhs)
+Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
 
 

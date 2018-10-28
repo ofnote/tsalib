@@ -53,22 +53,32 @@ class TS:
         if not isinstance(d, TS): return False
         return self.e == d.e    
 
+    def __hash__(self):
+        return hash(self.e)
     def __repr__(self):
         s = str(self.e)
         return s
 
 
-def decl_dim_vars(names):
+def dim_var (name):
+    '''
+    Declare a single dimension variable
+    '''
+    return TS(name)
+
+def dim_vars(names):
     '''
     Declare multiple dimension variables in one go
     '''
     names = names.strip().split(' ')
-    tss = [TS(name) for name in names]
-    return tss
+    tss = [dim_var(name) for name in names]
+
+    if len(names) == 1: return tss[0]
+    else: return tss
 
 def declare_common_dim_vars ():
-    B, V, D, Dh = decl_dim_vars('Batch Vocab EmbedDim HiddenDim')
-    C, Ci, Co = decl_dim_vars('Channels InChannels OutChannels')
-    T, Te, Td = decl_dim_vars('Time EncoderTime DecoderTime')
+    B, V, D, Dh = dim_vars('Batch Vocab EmbedDim HiddenDim')
+    C, Ci, Co = dim_vars('Channels InChannels OutChannels')
+    T, Te, Td = dim_vars('Time EncoderTime DecoderTime')
 
     return B, D, V, Dh, T, Te, Td, C, Ci, Co

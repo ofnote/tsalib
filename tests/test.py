@@ -3,11 +3,11 @@ sys.path.append('../')
 
 #from typing import List, Sequence, TypeVar
 
-from tsalib import TS, declare_common_dim_vars, decl_dim_vars
+from tsalib import dim_var, dim_vars, declare_common_dim_vars
 
 # definitions in tsalib/ts.py
 B, D, V, Dh, T, Te, Td, C, Ci, Co = declare_common_dim_vars()
-H, W = decl_dim_vars ('Height Width')
+H, W = dim_vars ('Height Width')
 
 
 def test_numpy():

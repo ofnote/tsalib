@@ -133,6 +133,8 @@ class Attention(torch.nn.Module):
 
     def forward(self, x: (B, T, self.nx)) -> torch.Tensor:
         D = self.split_size
+        H = self.n_head
+        
         x: (B, T, 3*D) = self.c_attn(x)
         qkv = x.split(D, dim=2)
 
@@ -140,8 +142,6 @@ class Attention(torch.nn.Module):
         key: (B, T, D) = qkv[1]
         value: (B, T, D) = qkv[2]
         
-        H = H
-
         query: (B, H, T, D // H) = self.split_heads(query)
         key: (B, H, D//H, T) = self.split_heads(key, k=True)
         value: (B, H, T, D // H) = self.split_heads(value)

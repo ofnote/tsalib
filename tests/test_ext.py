@@ -2,13 +2,13 @@ import sys
 sys.path.append('../')
 
 import numpy as np
-from tsalib.ext import view_transform, permute_transform
+from tsalib import dim_vars
+from tsalib import view_transform, permute_transform, expand_transform
 
 
 
 if __name__ == '__main__':
-    from tsalib.ts import decl_dim_vars
-    B, T, D, K = decl_dim_vars('Batch SeqLength EmbeddingDim K')
+    B, T, D, K = dim_vars('Batch SeqLength EmbeddingDim K')
     H = 4
 
     x = np.ones((20, 10, 100))
@@ -22,3 +22,9 @@ if __name__ == '__main__':
     x = x.transpose(perm_indices)
     print ('permutation order:', perm_indices)
     print (f'After transform, x : {x.shape}')
+
+    x: (B, T, D) = np.ones((20, 10, 100))
+    x: (B, K, T, D) = x[:, None]
+    print (f'Expanding {(B,K,T,D)} by {(K, K*5)}')
+    expand_shape = expand_transform(src=(B,K,T,D), expansions=[(K, K*5)], in_shape=x.shape)
+    print (f'expansion shape: {expand_shape}')
