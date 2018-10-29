@@ -34,9 +34,9 @@ from tsalib import dim_var as dv, dim_vars as dvs
 import numpy as np
 
 #declare named dimension variables
-B, C, H, W = dv('Batch'), dv('Channels'), dv('Height'), dv('Width')
+B, C, D, H, W = dv('Batch'), dv('Channels'), dv('EmbedDim'), dv('Height'), dv('Width')
 #or
-B, C, H, W = dvs('Batch Channels Height Width')
+B, C, D, H, W = dvs('Batch Channels EmbedDim Height Width')
 
 #now build expressions over dimension variables and annotate tensor variables
 
@@ -69,7 +69,7 @@ print (S[:-2]) #(Batch, 2*Channels)
 
 ## Examples
 
- The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py). With TSAs, the `forward` function gives a deeper insight into how the module works. 
+ The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 ## Dependencies
 
@@ -102,10 +102,12 @@ See [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 ## References
 
+* Blog [article](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b) introducing TSA.
 * A [proposal](https://docs.google.com/document/d/1vpMse4c6DrWH5rq2tQSx3qwP_m_0lyn-Ij4WHqQqRHY/edit#heading=h.rkj7d39awayl) for designing a tensor library with named dimensions from ground-up. The TSA library takes care of some use cases, without requiring any change in the tensor libraries.
 * Pytorch Issue on Names Axes [here](https://github.com/pytorch/pytorch/issues/4164).
 * Using [einsum](http://ajcr.net/Basic-guide-to-einsum/) for tensor operations improves productivity and code readability. [blog](https://rockt.github.io/2018/04/30/einsum)
 * The [Tile](https://vertexai-plaidml.readthedocs-hosted.com/en/latest/writing_tile_code.html) DSL uses indices ranging over dimension variables to write compact, library-independent tensor operations.
+* The [datashape](https://datashape.readthedocs.io/en/latest/) library introduces a generic type system and grammar for structure data. `tsalib` focuses on shapes of homogeneous tensor data types only, with arithmetic support.
 
 ## Contributors
 

@@ -1,42 +1,54 @@
 from sympy import symbols, Integer
-from sympy import Symbol
+from sympy import Symbol, nan, simplify
 
 
 def arith_op (op, s1, s2):
     assert isinstance(s1, TS)
     s2 = TS(s2)
-    s1 = s1.e
-    s2 = s2.e
+
+    valmap = {}
+    if s1.is_dvar: valmap[s1.e] = s1.val
+    if s2.is_dvar: valmap[s2.e] = s2.val
+
+    s1e = s1.e
+    s2e = s2.e
 
     #print (f'arith_op: {op} {s1} {s2}')
     if op == 'add':
-        res = s1 + s2
+        se = s1e + s2e
     elif op == 'mul':
-        res = s1 * s2
+        se = s1e * s2e
     elif op == 'truediv':
-        res = s1 / s2  
+        se = s1e / s2e  
     elif op == 'floordiv':
-        res = s1 // s2  
+        se = s1e // s2e  
     else:
         raise NotImplementedError(f'{op}')
 
-    return TS(res)
+    s_val = se.subs(valmap)
+
+    return TS(se, s_val)
 
 
 class TS:
     '''
     The Tensor Shape Expression Class
     '''
-    def __init__(self, v):
+    def __init__(self, v, value=nan):
+        self.val = value
         self.e = None
+        self.is_dvar = False # a basic dimension var
+
         if isinstance(v, str):
             names = v.strip().split(' ')
             assert len(names) == 1  #only allow single token names
             self.e = Symbol(v)
+            self.is_dvar = True
+
         elif isinstance(v, int):
             self.e = Integer(v)
         elif isinstance(v, TS):
-            self.e = v.e
+            self.e, self.val, self.is_dvar = v.e, v.val, v.is_dvar
         else:
             #print (f'test expr: {v} {repr(type(v))}')
             #assert 'sympy' in str(type(v))
@@ -57,6 +69,8 @@ class TS:
         return hash(self.e)
     def __repr__(self):
         s = str(self.e)
+        if self.val != nan:
+            s += f':{self.val}'
         return s
 
 
@@ -64,7 +78,11 @@ def dim_var (name):
     '''
     Declare a single dimension variable
     '''
-    return TS(name)
+    val = nan
+    if ':' in name:
+        name, val = name.strip().split(':')
+        val = int(val)
+    return TS(name, val)
 
 def dim_vars(names):
     '''

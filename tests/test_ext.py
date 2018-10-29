@@ -11,10 +11,10 @@ if __name__ == '__main__':
     B, T, D, K = dim_vars('Batch SeqLength EmbeddingDim K')
     H = 4
 
-    x = np.ones((20, 10, 100))
+    x: (20,10,100) = np.ones((20, 10, 100))
     print (f'For x ({x.shape}):\n Transforming view {(B,T,D)} to {(B,T,H,D//H)} ')
     new_shape = view_transform(src=(B,T,D), to=(B,T,H,D//H), in_shape=x.shape)
-    x = x.reshape(new_shape)
+    x:(20,10,4,25) = x.reshape(new_shape)
     print (f'After transform, x : {x.shape}')
 
     print (f'Permuting from {(B,T,D,K)} to {(D,T,B,K)}')

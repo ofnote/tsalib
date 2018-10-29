@@ -7,14 +7,15 @@ from tsalib import dim_var, dim_vars, declare_common_dim_vars
 
 # definitions in tsalib/ts.py
 B, D, V, Dh, T, Te, Td, C, Ci, Co = declare_common_dim_vars()
-H, W = dim_vars ('Height Width')
+H, W = dim_vars ('Height:256 Width:256')
+print(H, W)
 
 
 def test_numpy():
     import numpy as np
     a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]])
     print(f'original array: {(B,D)}: {a.shape}')
-    
+
     b: (2, B, D) = np.stack([a, a])
     print(f'after stack: {(2,B,D)}: {b.shape}')
 
@@ -25,7 +26,7 @@ def test_numpy():
     # Supports arithmetic over a combination of dim vars and other Python variables
     K = W * 2
     var1 = 10
-    print((...,4, H // 4, K, var1))
+    print((...,4, H // 4, K, B*2, var1))
 
 
 def test_pytorch():
@@ -47,5 +48,6 @@ def test_pytorch():
 
 if __name__ == '__main__':
     test_numpy()
+    print('')
     test_pytorch()
    
