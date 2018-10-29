@@ -7,13 +7,10 @@ import torch.utils.model_zoo as model_zoo
 
 import sys
 sys.path.append('../')
-from tsalib.ts import TS, declare_base_shapes
+from tsalib import dim_vars, declare_common_dim_vars
 
-B, D, V, Dh, Te, Td, Ci, Co = declare_base_shapes()
-H = TS('Height')
-W = TS('Width')
-C = TS('Channels')
-Ex = TS('BlockExpansion')
+B, D, V, Dh, T, Te, Td, C, Ci, Co = declare_common_dim_vars()
+H, W, C, Ex = dim_vars('Height Width Channels BlockExpansion')
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -227,10 +224,13 @@ def test_resnet ():
     bb = BasicBlock(64, 64)
     x = torch.ones(10, 64, 256, 256)
     out = bb.forward(x)
+    print (out.size())
     
-    rs18 = resnet101()
+    
+    rs18 = resnet18()
     x = torch.ones(10, 3, 224, 224)
     out = rs18.forward(x)
+    print (out.size())
 
 if __name__ == '__main__':
     test_resnet()
