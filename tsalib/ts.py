@@ -34,6 +34,8 @@ class TS:
     '''
     The Tensor Shape Expression Class
     '''
+    decls = {} #caches all dim var declarations
+
     def __init__(self, v, value=nan):
         self.val = value
         self.e = None
@@ -41,9 +43,10 @@ class TS:
 
         if isinstance(v, str):
             names = v.strip().split(' ')
-            assert len(names) == 1  #only allow single token names
+            assert len(names) == 1  #each var = single token name
             self.e = Symbol(v)
             self.is_dvar = True
+            TS.decls[v] = self
 
         elif isinstance(v, int):
             self.e = Integer(v)
@@ -57,7 +60,7 @@ class TS:
     def __add__(self, n): return arith_op('add', self, n)
     def __mul__(self, n): return arith_op('mul', self, n)
     def __floordiv__(self, n): return arith_op('floordiv', self, n)
-    #truediv: '/' provided for convenience
+    #truediv: '/' provided for convenience; prefer using '//'
     def __truediv__(self, n): return arith_op('truediv', self, n)
 
     def __eq__(self, d):
