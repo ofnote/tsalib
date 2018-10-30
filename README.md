@@ -1,7 +1,7 @@
 # Tensor Shape Annotation Library (tsalib)
 
-The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, shape *expressions* over *named* dimensions for matrix/tensor variables.
-These expressions can be used to annotate variables with their shapes inline in your deep learning/tensor program.
+The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **shape expressions** over **named dimensions** for matrix/tensor variables.
+They can be used to annotate variables *inline* with their shapes in your deep learning/tensor program.
 They also enable us to write more *fluent* shape transformations and matrix/tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
@@ -9,29 +9,26 @@ Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-an
 
 Writing deep learning programs which manipulate multi-dimensional tensors (with `numpy`, `pytorch`, `keras`, `tensorflow`, ..) requires you to carefully keep track of shapes of tensor variables. Carrying around the shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, doing a surgery of deep pre-trained architectures (`resnet101`, `densenet`), designing a new kind of `attention` mechanism or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes.
 
-`tsalib` comes to our rescue here. It allows you to write shape *expressions* describing the shape of tensor variables. These expressions can be used in multiple ways, e.g., as *first-class* type annotations of variables, or to specify shape transformations (`reshape`, `permute`, `expand`) or a tensor product operations (`matmult`) succinctly. TSAs expose the typically invisible tensor shape `types`, leading to improvemed productivity across the board. 
+`tsalib` comes to our rescue here. It allows you to write shape *expressions* describing the shape of tensor variables. These expressions can be used in multiple ways, e.g., as *first-class* type annotations of variables, or to specify shape transformations (`reshape`, `permute`, `expand`) or a tensor product operations (`matmult`) succinctly. TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 ## Dimension Variables
 
-Tensor shape annotations (TSAs) are constructed using `dimension` variables:
-     - `B` (Batch), `C` (Channels), `D` (EmbedDim)
-     - Integer constants, and 
-     - Arithmetic expressions (`B*2`, `C+D`) over them. 
+Tensor shape annotations (TSAs) are constructed using `dimension` variables: `B` (Batch), `C` (Channels), `D` (EmbedDim), Integer constants, and arithmetic expressions (`B*2`, `C+D`) over them. 
 
-TSAs may be be represented either as `tuple` or a compact `string`.
-* a tuple `(B,H,D)` of shape expressions and numbers,
+TSAs may be be represented as
+* a tuple `(B,H,D)` [long form]
 * a string `'b,h,d'` (compact notation) (or simply `'bhd'`)
 
-Here is an example snippet which uses TSAs in a `pytorch` program. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+Here is an example snippet which uses TSAs in a `pytorch` program to describe how program operations change the input shape incrementally. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
 ```python
 from tsalib import dim_vars as dvs
 B, C, H, W = dvs('Batch Channels Height Width') #declare dimension variables
 ...
-v: (B, C, H, W) = torch.randn(batch_size, channels, h, w) #create tensor
+v: (B, C, H, W) = torch.randn(batch_size, n_channels, h, w) #create tensor
 v: (B, C, H // 2, W // 2) = maxpool(v) #torch maxpool operation
 
-#if dimension is fixed:
+#or, if n_channels is fixed:
 v : (B, 64, H, W) = torch.randn(batch_size, 64, h, w)
 
 ``` 
@@ -41,6 +38,11 @@ Shape annotations turn out to be useful in many ways.
 * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors. 
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 * They serve as useful documentation to help others understand or extend your module.
+
+
+## Installation
+
+`pip install tsalib`
 
 ## Getting Started
 
@@ -68,9 +70,11 @@ S2 = (B*C, D//2)
 
 ### Use TSAs to annotate variables on-the-go (Python 3)
 
+```python
 a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
 
 b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
+```
 
 Arithmetic over dimension variables is supported. This enables easy tracking of shape changes across neural network layers.
 
@@ -81,11 +85,6 @@ x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v)
 
 ### Use TSAs to make matrix operations compact and explicit
 
-```python
-ax = (2, B, D).index(B) #ax = 1
-c: (2, D) = np.mean(b, axis=ax) 
-print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
-```
 
 Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` to specify view changes declaratively.
 
@@ -107,8 +106,14 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order fro
     x = x.transpose(pt('btd','dtb'))
 ```
 
-See [tests/test_ext.py](tests/test_ext.py) for complete examples.
+Use dimension names instead of cryptic indices.
+```python
+ax = (2, B, D).index(B) #ax = 1
+c: (2, D) = np.mean(b, axis=ax) 
+print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
+```
 
+See [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 
 ## Examples
@@ -124,9 +129,6 @@ Tested with Python 2.7, 3.6. For writing type annotations inline, Python >= 3.5 
 Python >= 3.5 allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 
-## Installation
-
-`pip install tsalib`
 
 
 
