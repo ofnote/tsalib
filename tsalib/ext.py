@@ -14,8 +14,8 @@ def view_transform (src, to, in_shape):
     assert isinstance(in_shape, (list, tuple))
 
     #sub_map = [(d.e, Symbol(f'{i}')) for i, d in enumerate(src)]
-    sub_map = [(d.e, in_shape[i]) for i, d in enumerate(src)]
-    out_shape = tuple([t.e.subs(sub_map) if isinstance(t, TS) else t for t in to])
+    sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)]
+    out_shape = tuple([t.exp.subs(sub_map) if isinstance(t, TS) else t for t in to])
 
     return out_shape
 
@@ -31,8 +31,8 @@ def permute_transform(src, to):
     '''
     assert isinstance(src, (list, tuple))
     assert isinstance(to, (list, tuple))
-    sub_map = [(d.e, i) for i, d in enumerate(src)]
-    perm_indices = tuple([t.e.subs(sub_map) for t in to])
+    sub_map = [(d.exp, i) for i, d in enumerate(src)]
+    perm_indices = tuple([t.exp.subs(sub_map) for t in to])
     return perm_indices
 
 
@@ -47,7 +47,7 @@ def expand_transform (src, expansions, in_shape):
     assert isinstance(expansions, (list, tuple))
 
     exp_map = dict(expansions)
-    sub_map = [(d.e, in_shape[i]) for i, d in enumerate(src)] # (B, 10), (T, 20), (D, 300)
+    sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)] # (B, 10), (T, 20), (D, 300)
 
 
     res = []
@@ -56,7 +56,7 @@ def expand_transform (src, expansions, in_shape):
         else:
             v = exp_map[k]
             assert isinstance(v, TS)
-            res.append(v.e.subs(sub_map)) #(T*5) -> 100, (D*4) -> 1200
+            res.append(v.exp.subs(sub_map)) #(T*5) -> 100, (D*4) -> 1200
 
     return tuple(res)
 

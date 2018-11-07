@@ -1,19 +1,18 @@
-# Tensor Shape Annotation Library (tsalib)
+# Tensor Shape Library (tsalib)
 
-The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **shape expressions** over **named dimensions** for matrix/tensor variables.
-They can be used to annotate variables *inline* with their shapes in your deep learning/tensor program.
-They also enable us to write more *fluent* shape transformations and matrix/tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
+Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **shape expressions** over **dimension variables** to model matrix/tensor variable shapes.
+TSAs enable us to label variables with their shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 ## Introduction
 
-Writing deep learning programs which manipulate multi-dimensional tensors (with `numpy`, `pytorch`, `keras`, `tensorflow`, ..) requires you to carefully keep track of shapes of tensor variables. Carrying around the shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, doing a surgery of deep pre-trained architectures (`resnet101`, `densenet`), designing a new kind of `attention` mechanism or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes.
+ Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`) or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
-`tsalib` comes to our rescue here. It allows you to write shape *expressions* describing the shape of tensor variables. These expressions can be used in multiple ways, e.g., as *first-class* type annotations of variables, or to specify shape transformations (`reshape`, `permute`, `expand`) or a tensor product operations (`matmult`) succinctly. TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
+`tsalib` comes to our rescue here. It allows you to write shape *expressions* over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways, e.g., as first-class type annotations of variables, or to specify shape transformations (`reshape`, `permute`, `expand`) or tensor product operations (`matmult`) succinctly. TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 ## Dimension Variables
 
-Tensor shape annotations (TSAs) are constructed using `dimension` variables: `B` (Batch), `C` (Channels), `D` (EmbedDim), Integer constants, and arithmetic expressions (`B*2`, `C+D`) over them. 
+Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- Integer constants, and arithmetic expressions (`B*2`, `C+D`) over them. Define dimension variables customized to your architecture/program.
 
 TSAs may be be represented as
 * a tuple `(B,H,D)` [long form]
@@ -94,15 +93,15 @@ Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` t
     x = x.reshape(new_shape) #(20, 10, 300) -> (20, 10, 4, 75)
    
     #or, compact form:
-    x = x.reshape(vt('btd', 'b,t,4,d//4'))
+    x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape))
 ```
 
-Similarly, use `tsalib.permute_transform` to compute permutation index order from a declarative spec. 
+Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
 ```python 
     perm_indices = permute_transform(src=(B,T,D), to=(D,T,B)) #(2, 1, 0)
     x = x.transpose(perm_indices) #(10, 50, 300) -> (300, 50, 10)
     
-    #or, compact:
+    #or, compactly:
     x = x.transpose(pt('btd','dtb'))
 ```
 
