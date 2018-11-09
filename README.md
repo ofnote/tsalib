@@ -41,8 +41,8 @@ x: (B, C, H // 2, W // 2) = maxpool(x)
 #check symbolic assertions over TSAs, without knowing concrete shapes
 assert x.size() == (B, C, H // 2, W // 2)
 
-#reshape/permute using shorthand (einsum-like) notation with placeholders
-x = x.view(vt('_,_,k,l', '_,_,k*l', x.size()))
+#reshape/permute using shorthand (einsum-like) notation (+placeholders!)
+x = x.view(vt('bckl', 'b,c,k*l', x.size()))
 assert x.size() == (B, C, (H//2)*(W//2))
 
 
