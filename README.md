@@ -1,7 +1,7 @@
-# Tensor Shape Library (tsalib)
+# Tensor Shape Annotations Library (tsalib)
 
 Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **shape expressions** over **dimension variables** to model matrix/tensor variable shapes.
-TSAs enable us to label variables with their shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
+TSAs enable us to label and verify tensor variables shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 See updates [here](#change-log).
@@ -11,15 +11,15 @@ See updates [here](#change-log).
  Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`) or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
 `tsalib` comes to our rescue here. It allows you to write shape expressions over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways: 
-- to write `symbolic` shape `assert`ions
-- as first-class annotations of tensor variables, 
+- as first-class annotations of tensor variables,
+- to write `symbolic` shape `assert`ions and tensor constructors
 - to specify shape transformations (`reshape`, `permute`, `expand`) or tensor product operations (`matmult`) succinctly. 
 
 TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 ## Dimension Variables
 
-Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- Integer constants, and arithmetic expressions (`B*2`, `C+D`) over them. Define dimension variables customized to your architecture/program.
+Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
 
 TSAs may be be represented as
 * a tuple `(B,H,D)` [long form]
@@ -124,6 +124,7 @@ Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` t
     new_shape = view_transform(src=(B,T,D), to=(B,T,4,D//4), in_shape=x.shape)
     x = x.reshape(new_shape) #(20, 10, 300) -> (20, 10, 4, 75)
    
+    from tsalib import view_transform as vt
     #or, compact form:
     x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape))
     #or, super-compact, using dimension placeholders:
@@ -135,6 +136,7 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
     perm_indices = permute_transform(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
     x = x.transpose(perm_indices) #(10, 50, 300, 30) -> (300, 50, 10, 30)
     
+    from tsalib import permute_transform as pt
     #or, compactly:
     x = x.transpose(pt('btdk', 'dtbk'))
     #or, super-compact:
