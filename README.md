@@ -152,6 +152,8 @@ print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: 
 ```
 
 
+See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
+
 
 ## Examples
 
@@ -185,8 +187,9 @@ Full docs coming soon!
 Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
 
 ## Change Log
-[9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
-[9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
-[25 Oct 2018] Initial Release
+
+* [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
+* [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
+* [25 Oct 2018] Initial Release
 
 
