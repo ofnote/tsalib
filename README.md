@@ -4,11 +4,18 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 TSAs enable us to label variables with their shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
+See updates [here](#change-log).
+
 ## Introduction
 
  Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`) or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
-`tsalib` comes to our rescue here. It allows you to write shape *expressions* over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways, e.g., as first-class type annotations of variables, or to specify shape transformations (`reshape`, `permute`, `expand`) or tensor product operations (`matmult`) succinctly. TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
+`tsalib` comes to our rescue here. It allows you to write shape expressions over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways: 
+- to write `symbolic` shape `assert`ions
+- as first-class annotations of tensor variables, 
+- to specify shape transformations (`reshape`, `permute`, `expand`) or tensor product operations (`matmult`) succinctly. 
+
+TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 ## Dimension Variables
 
@@ -18,7 +25,7 @@ TSAs may be be represented as
 * a tuple `(B,H,D)` [long form]
 * a string `'b,h,d'` (compact notation) (or simply `'bhd'`)
 
-Here is an example snippet which uses TSAs in a `pytorch` program to describe how program operations change the input shape incrementally. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
 ```python
 from tsalib import dim_vars as dvs
@@ -31,7 +38,6 @@ B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256')
 x: (B, C, H, W) = torch.randn(B, C, H, W) 
 #perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
-...
 #check symbolic assertions over TSAs, without knowing concrete shapes
 assert x.size() == (B, C, H // 2, W // 2)
 
@@ -69,12 +75,12 @@ import numpy as np
 B, C, D, H, W = dv('Batch'), dv('Channels'), dv('EmbedDim'), dv('Height'), dv('Width')
 #or
 B, C, D, H, W = dvs('Batch Channels EmbedDim Height Width')
-#or declare dim vars with optional integer value
+#or declare dim vars with default integer values (optional)
 B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
 #or provide *shorthand* names for dim vars
 B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w)')
 
-# Shapes are tuples over dimension variables
+# TSAs are tuples over dimension variables
 S1 = (B, C, D)
 # we can always verify TSAs against concrete shapes
 assert S1 == (48, 3, 300)
@@ -87,7 +93,7 @@ Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `
 ```python
 B, D = dvs('Batch:48 EmbedDim:300')
 #declare a 2-D tensor of shape(48, 300)
-x: (B, D) = torch.randn(B, D)
+x = torch.randn(B, D)
 #assertions over dimension variables (not exact values)
 assert x.size() == (B, D)
 ```
@@ -120,7 +126,7 @@ Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` t
    
     #or, compact form:
     x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape))
-    #or, most compact, using dimension placeholders:
+    #or, super-compact, using dimension placeholders:
     x = x.reshape(vt(',,d', ',,4,d//4', x.shape))
 ```
 
@@ -147,7 +153,7 @@ print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: 
 
 ## Examples
 
- The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [resnet](examples/resnet.py), [transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
+ The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [Resnet](examples/resnet.py), [OpenAI Transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 ## Dependencies
 
@@ -175,5 +181,10 @@ Full docs coming soon!
 ## Contributors
 
 Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
+
+## Change Log
+[9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
+[9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
+[25 Oct 2018] Initial Release
 
 
