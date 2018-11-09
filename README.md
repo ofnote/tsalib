@@ -22,19 +22,31 @@ Here is an example snippet which uses TSAs in a `pytorch` program to describe ho
 
 ```python
 from tsalib import dim_vars as dvs
-B, C, H, W = dvs('Batch Channels Height Width') #declare dimension variables
-...
-v: (B, C, H, W) = torch.randn(batch_size, n_channels, h, w) #create tensor
-v: (B, C, H // 2, W // 2) = maxpool(v) #torch maxpool operation
+from tsalib import view_transform as vt, permute_transform as pt
 
-#or, if n_channels is fixed:
-v : (B, 64, H, W) = torch.randn(batch_size, 64, h, w)
+#declare dimension variables
+B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
+...
+#create tensors using dimension variables
+x: (B, C, H, W) = torch.randn(B, C, H, W) 
+#perform tensor transformations
+x: (B, C, H // 2, W // 2) = maxpool(x) 
+...
+#check symbolic assertions over TSAs, without knowing concrete shapes
+assert x.size() == (B, C, H // 2, W // 2)
+
+#reshape/permute using shorthand (einsum-like) notation with placeholders
+x = x.view(vt('_,_,k,l', '_,_,k*l', x.size()))
+assert x.size() == (B, C, (H//2)*(W//2))
+
 
 ``` 
 
-Shape annotations turn out to be useful in many ways. 
-* They help us to quickly cross-check the variable shapes when writing new transformations or modifying existing modules.
-* Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors. 
+Shape annotations/assertions turn out to be useful in many ways. 
+* They help us to quickly verify the variable shapes when writing new transformations or modifying existing modules. 
+* Assertions and annotations remain the same even if the concrete dimension lengths change.
+* Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
+* Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 * They serve as useful documentation to help others understand or extend your module.
 
@@ -45,7 +57,7 @@ Shape annotations turn out to be useful in many ways.
 
 ## Getting Started
 
-See [tests/test.py](tests/test.py) for complete examples.
+See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
 
 ```python
 from tsalib import dim_var as dv, dim_vars as dvs
@@ -62,8 +74,22 @@ B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
 #or provide *shorthand* names for dim vars
 B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w)')
 
+# Shapes are tuples over dimension variables
 S1 = (B, C, D)
-S2 = (B*C, D//2)
+# we can always verify TSAs against concrete shapes
+assert S1 == (48, 3, 300)
+```
+
+### Use Dimension Variables to declare Tensors
+
+Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` uniformly throughout your code.
+
+```python
+B, D = dvs('Batch:48 EmbedDim:300')
+#declare a 2-D tensor of shape(48, 300)
+x: (B, D) = torch.randn(B, D)
+#assertions over dimension variables (not exact values)
+assert x.size() == (B, D)
 ```
 
 
@@ -78,8 +104,8 @@ b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
 Arithmetic over dimension variables is supported. This enables easy tracking of shape changes across neural network layers.
 
 ```python
-v: (B, C, H, W) = torch.randn(batch_size, channels, h, w)
-x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v) 
+v: (B, C, H, W) = torch.randn(B, C, h, w)
+x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v) 
 ```
 
 ### Use TSAs to make matrix operations compact and explicit
@@ -88,21 +114,26 @@ x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(ch_in, ch_in*2, ...)(v)
 Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` to specify view changes declaratively.
 
 ```python
-    x: (20,10,300) = np.ones((20, 10, 300))
+    x = np.ones((B, T, D))
     new_shape = view_transform(src=(B,T,D), to=(B,T,4,D//4), in_shape=x.shape)
     x = x.reshape(new_shape) #(20, 10, 300) -> (20, 10, 4, 75)
    
     #or, compact form:
     x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape))
+    #or, most compact, using dimension placeholders:
+    x = x.reshape(vt(',,d', ',,4,d//4', x.shape))
 ```
 
 Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
 ```python 
-    perm_indices = permute_transform(src=(B,T,D), to=(D,T,B)) #(2, 1, 0)
-    x = x.transpose(perm_indices) #(10, 50, 300) -> (300, 50, 10)
+    perm_indices = permute_transform(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
+    x = x.transpose(perm_indices) #(10, 50, 300, 30) -> (300, 50, 10, 30)
     
     #or, compactly:
-    x = x.transpose(pt('btd','dtb'))
+    x = x.transpose(pt('btdk', 'dtbk'))
+    #or, super-compact:
+    x = x.transpose(pt('b_d_', 'd_b_'))
+
 ```
 
 Use dimension names instead of cryptic indices.
@@ -112,7 +143,6 @@ c: (2, D) = np.mean(b, axis=ax)
 print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
 ```
 
-See [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 
 ## Examples
@@ -123,12 +153,14 @@ See [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 `sympy`. A library for building symbolic expressions in Python.
 
-Tested with Python 2.7, 3.6. For writing type annotations inline, Python >= 3.5 is required.
+Tested with Python 3.6. For writing type annotations inline, Python >= 3.5 is required.
 
 Python >= 3.5 allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 
+## Documentation
 
+Full docs coming soon!
 
 
 ## References

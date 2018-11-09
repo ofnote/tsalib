@@ -27,7 +27,12 @@ class DimVar:
     decls = {} #caches all dim var declarations
     parse_regexp = r'(\w+)(?:\((\w)\))?(?::(\d+))?' #Height(h)?(:300)?
 
-    def __init__ (self, decl, strict):
+    def __init__ (self, decl, strict, cache):
+        '''
+        :decl: declaration string of variable ('Batch(b):20')
+        :strict: allow declaration if undeclared earlier
+        :cache: store in `decls` cache
+        '''
         assert isinstance(decl, str)
         decl = decl.strip()
 
@@ -42,8 +47,9 @@ class DimVar:
         self._e = Symbol(self._sname)
         if strict and self._e in DimVar.decls:
             raise ValueError(f'DimVar {self._sname} already declared.')
-       
-        DimVar.decls[self._e] = self
+
+        if cache:       
+            DimVar.decls[self._e] = self
 
     @property
     def exp(self): return self._e
@@ -60,11 +66,16 @@ class DimVar:
     @staticmethod
     def check_decl(sname):
         return Symbol(sname) in DimVar.decls
+    @staticmethod
+    def lookup(sname):
+        return DimVar.decls[Symbol(sname)]
 
     @staticmethod
     def eval(e):
         sub_map = [(e, dv._val) for e, dv in DimVar.decls.items()]
-        return e.subs(sub_map)
+        ret = e.subs(sub_map)
+        #print (f'eval: {e} -> {ret}')
+        return ret
 
     @staticmethod
     def eval_name(e):
@@ -92,6 +103,7 @@ class TS:
             #print (f'test expr: {v} {repr(type(v))}')
             self._e = t
             self._val = DimVar.eval(t)
+            #self._val = int(v) if v is not nan else v
 
     @property
     def exp(self): return self._e
@@ -100,20 +112,34 @@ class TS:
         return self._val if (self._val != nan) else None
 
     def __int__(self): 
+        #print(f'called int {self._val}')
         if self._val != nan:
-            return self._val
+            return int(self._val)
         else: return TS.DEFAULT_VALUE
+    def __index__(self): return self.__int__()
 
     def __add__(self, n): return arith_op('add', self, n)
+    def __radd__(self, n): return self.__add__(n)
     def __mul__(self, n): return arith_op('mul', self, n)
+    def __rmul__(self, n): return self.__mul__(n)
+
     def __floordiv__(self, n): return arith_op('floordiv', self, n)
+    def __rfloordiv__(self, n): return self.__floordiv__(n)
+
     #truediv: '/' provided for convenience; prefer using '//'
     def __truediv__(self, n): return arith_op('truediv', self, n)
+    def __rtruediv__(self, n): return self.__truediv__(n)
 
     def __eq__(self, d):
-        #TODO: being conservative here, may need to generalize this
-        if not isinstance(d, TS): return False
-        return self._e == d._e    
+        #print (f'eq: {self._val}, {d}')
+        if isinstance(d, int):
+            #semantics: any integer matches nan
+            if self._val == nan: return True 
+            else: return self._val == d
+        elif isinstance(d, TS):
+            return self._e == d._e 
+        else:
+            return False   
 
     def __hash__(self):
         return hash(self._e)
@@ -125,12 +151,22 @@ class TS:
         return s
 
 
-def dim_var (name, strict=True):
+def dim_var (name, strict=True, cache=True):
     '''
     Declare a single dimension variable
     '''
-    d = DimVar(name, strict=strict)
+    d = DimVar(name, strict=strict, cache=cache)
     return TS(d)
+
+def dummy_dvar(pos):
+    '''
+    Declare a dummy dimension variable at a particular dim position. Do not cache.
+    '''
+    assert pos >= 0
+    name = f'_dm_{pos}'
+    d = dim_var(name, cache=False)
+    #print (f'dummy {d}')
+    return d
 
 def dim_vars(names, strict=True):
     '''
@@ -141,6 +177,10 @@ def dim_vars(names, strict=True):
 
     if len(names) == 1: return tss[0]
     else: return tss
+
+def get_dim_vars(names):
+    names = list(names)
+    return [DimVar.lookup(name) for name in names]
 
 def declare_common_dim_vars ():
     B, V, D, Dh = dim_vars('Batch Vocab EmbedDim HiddenDim')
