@@ -46,7 +46,7 @@ class DimVar:
         
         self._e = Symbol(self._sname)
         if strict and self._e in DimVar.decls:
-            raise ValueError(f'DimVar {self._sname} already declared.')
+            raise ValueError(f'DimVar {self._sname} already declared. Use strict=False to skip check.')
 
         if cache:       
             DimVar.decls[self._e] = self
@@ -86,7 +86,7 @@ class TS:
     '''
     The Tensor Shape Expression Class
     '''
-    DEFAULT_VALUE = 1
+    #DEFAULT_VALUE = 1
 
     def __init__(self, t, is_dvar=False):
         self._e = None
@@ -115,7 +115,9 @@ class TS:
         #print(f'called int {self._val}')
         if self._val != nan:
             return int(self._val)
-        else: return TS.DEFAULT_VALUE
+        else: 
+            #return TS.DEFAULT_VALUE
+            raise ValueError(f'Cannot cast to integer: Default value of {self._e} not provided')
     def __index__(self): return self.__int__()
 
     def __add__(self, n): return arith_op('add', self, n)
@@ -164,16 +166,30 @@ def dummy_dvar(pos):
     '''
     assert pos >= 0
     name = f'_dm_{pos}'
-    d = dim_var(name, cache=False)
+    d = dim_var(name, strict=False, cache=False)
     #print (f'dummy {d}')
     return d
 
-def dim_vars(names, strict=True):
+def dim_vars_shape(names, shape, strict=True):
+    '''
+    Declare dim vars corresponding to dimensions of tensor
+    :names 'b t d'
+    :shape (10, 30, 300)
+    '''
+    names = names.strip().split(' ')
+    assert len(names) == len(shape), 'Number of Dimension Variables and Shape mismatch'
+
+    tss = [dim_var(f'{name}:{shape[i]}', strict=strict) for i, name in enumerate(names)]
+    if len(names) == 1: return tss[0]
+    else: return tss
+
+
+def dim_vars(names, strict=True, cache=True):
     '''
     Declare multiple dimension variables in one go
     '''
     names = names.strip().split(' ')
-    tss = [dim_var(name, strict=strict) for name in names]
+    tss = [dim_var(name, strict=strict, cache=cache) for name in names]
 
     if len(names) == 1: return tss[0]
     else: return tss

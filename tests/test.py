@@ -32,8 +32,8 @@ def test_arith():
 def test_cast_int():
     print('\n Test integer cast ..')
 
-    x = np.zeros((D, W))
-    print(f'shape of array: ({D},{W}): {x.shape}')
+    x = np.zeros((B, C))
+    print(f'shape of array: ({B},{C}): {x.shape}')
 
 def test_numpy():
     print('\n Test usage with numpy ..')
@@ -57,15 +57,15 @@ def test_pytorch():
     B, D = dim_vars('Batch:2 EmbedDim:3')
     import torch
 
-    a: (B, D) = torch.Tensor([[1., 2., 4.], [3., 6., 9.]])
+    a = torch.Tensor([[1., 2., 4.], [3., 6., 9.]])
     assert a.size() == (B, D)
 
-    b: (2, B, D) = torch.stack([a, a])
+    b = torch.stack([a, a])
 
     print ('Asserting b.size() == (2,B,D)')
     assert b.size() == (2, B, D)
 
-    c: (B, 2*D) = torch.cat([a, a], dim=1)
+    c = torch.cat([a, a], dim=1)
     assert c.size() == (B, D*2)
 
 

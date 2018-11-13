@@ -29,21 +29,23 @@ Here is an example snippet which uses TSAs in a `pytorch` program to define, tra
 
 ```python
 from tsalib import dim_vars as dvs
-from tsalib import view_transform as vt, permute_transform as pt
+from tsalib import view_transform as vt
 
 #declare dimension variables
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
 ...
-#create tensors using dimension variables
+#create tensors using dimension variables (interpret dim vars as integers)
 x: (B, C, H, W) = torch.randn(B, C, H, W) 
 #perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
 #check symbolic assertions over TSAs, without knowing concrete shapes
 assert x.size() == (B, C, H // 2, W // 2)
 
-#reshape/permute using shorthand (einsum-like) notation (+placeholders!)
-x = x.view(vt('bckl', 'b,c,k*l', x.size()))
-assert x.size() == (B, C, (H//2)*(W//2))
+#reshape/permute using shorthand (einsum-like) notation
+x1 = x.view(vt(',,kl', ',,k*l', x.size()))
+assert x1.size() == (B, C, (H//2)*(W//2))
+# altneratively : super convenient reshapes!
+x2 = x.view ((B,C, (H//2)*(W//2)))
 
 
 ``` 
@@ -66,7 +68,7 @@ Shape annotations/assertions turn out to be useful in many ways.
 See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
 
 ```python
-from tsalib import dim_var as dv, dim_vars as dvs
+from tsalib import dim_var as dv, dim_vars as dvs, dim_vars_shape as dvs2
 import numpy as np
 ```
 
@@ -79,6 +81,9 @@ B, C, D, H, W = dvs('Batch Channels EmbedDim Height Width')
 B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
 #or provide *shorthand* names for dim vars
 B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w)')
+
+# switch from using config constants to using dimension vars
+B, C, D = dvs2('Batch(b) Channels(c) EmbedDim(d)', (config.batch_size, config.num_channels, config.embed_dim))
 
 # TSAs are tuples over dimension variables
 S1 = (B, C, D)
@@ -117,22 +122,27 @@ x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v)
 ### Use TSAs to make matrix operations compact and explicit
 
 
-Avoid explicit shape computations for `reshaping`. Use `tsalib.view_transform` to specify view changes declaratively.
+Avoid explicit shape computations for `reshaping`. 
+```python
+    #use dimension variables directly
+    x = torch.ones(B, T, D)
+    x = x.view(B, T, 4, D//4)
+```
+
+In general, use `tsalib.view_transform` to specify view changes declaratively.
 
 ```python
     x = np.ones((B, T, D))
-    new_shape = view_transform(src=(B,T,D), to=(B,T,4,D//4), in_shape=x.shape)
-    x = x.reshape(new_shape) #(20, 10, 300) -> (20, 10, 4, 75)
-   
     from tsalib import view_transform as vt
     #or, compact form:
-    x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape))
-    #or, super-compact, using dimension placeholders:
+    x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape)) #(20, 10, 300) -> (20, 10, 4, 75)
+    #or, super-compact, using anonymous dimensions:
     x = x.reshape(vt(',,d', ',,4,d//4', x.shape))
 ```
 
 Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
 ```python 
+    # long form:
     perm_indices = permute_transform(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
     x = x.transpose(perm_indices) #(10, 50, 300, 30) -> (300, 50, 10, 30)
     
@@ -140,7 +150,7 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
     #or, compactly:
     x = x.transpose(pt('btdk', 'dtbk'))
     #or, super-compact:
-    x = x.transpose(pt('b_d_', 'd_b_'))
+    x = x.transpose(pt('b,,d,', 'd,,b,'))
 
 ```
 
@@ -168,9 +178,10 @@ Tested with Python 3.6. For writing type annotations inline, Python >= 3.5 is re
 Python >= 3.5 allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 
-## Documentation
+## Best Practices
 
-Full docs coming soon!
+* Convert all *relevant* config parameters into dimension variables. Use only the latter in your code.
+* Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
 
 
 ## References

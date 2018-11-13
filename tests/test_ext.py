@@ -6,7 +6,7 @@ from tsalib import dim_vars
 from tsalib import view_transform as vt, permute_transform as pt, expand_transform as et
 
 
-B, T, D, K = dim_vars('Batch(b):20 SeqLength(t):10 EmbeddingDim(d):100 K(k)')
+B, T, D, K = dim_vars('Batch(b):20 SeqLength(t):10 EmbeddingDim(d):100 K(k):1')
 
 
 def test_reshape():
@@ -16,10 +16,10 @@ def test_reshape():
 
     h = 4
     print (f'Transforming view {(B,T,D)} to {(B,T,h,D//h)} ')
-    new_shape = vt(src=(B,T,D), to=(B,T,h,D//h), in_shape=x.shape)
-    assert new_shape == (B, T, h, D//h)
+    #new_shape = vt(src=(B,T,D), to=(B,T,h,D//h), in_shape=x.shape)
+    #assert new_shape == (B, T, h, D//h)
 
-    x:(B,T,h,D//h) = x.reshape(new_shape)
+    x:(B,T,h,D//h) = x.reshape((B, T, h, D//h))
     print (f'After transform, x : {x.shape}\n')
 
 def test_reshape_short():

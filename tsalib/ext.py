@@ -2,7 +2,11 @@ from tsalib.ts import TS, dim_var, dummy_dvar
 from sympy import sympify
 
 
-def sexpr_to_ts (e, dummy_idx=-1):
+def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
+    '''
+    A single string expression (sexpr) to Tensor Shape expressions (ts)
+    Converts shorthand dummy/empty placeholders to dummy TSs
+    '''
     if isinstance(e, TS):  
         t = e
     else: 
@@ -16,35 +20,35 @@ def sexpr_to_ts (e, dummy_idx=-1):
 
     return t, dummy_idx
 
-def sexprs_to_ts(exprs):
+def _sexprs_to_ts(exprs, strict=False):
     '''
     String expressions (sexprs) to Tensor Shape expressions (ts)
-    Converts dummy/empty placeholders in the string to dummy TSs
-    Returns a list of TSs
+    Converts shorthand dummy/empty placeholders to dummy TSs
+    Returns a tuple of TSs
     '''
     dummy_idx = 0
     res = []
     for e in exprs:
-        t, dummy_idx = sexpr_to_ts(e, dummy_idx)
+        t, dummy_idx = _sexpr_to_ts(e, dummy_idx, strict)
         res.append(t)
 
     #print (exprs, res)
     return tuple(res)
 
 
-def to_tuple (ss):
+def _to_tuple (ss):
     '''
-    :ss is shape string ('btd')
+    :ss is shape string, e.g., ('btd') or ('b,t,d*2')
     '''
     if isinstance(ss, (list, tuple)):
         for s in ss: assert isinstance(s, (TS,int))
         return tuple(ss)
 
     elif isinstance(ss, str):
-        if ',' in ss: exprs = ss.split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
+        if ',' in ss: exprs = ss.strip().split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
         else: exprs = list(ss)              # 'btd' -> ['b','t','d']
 
-        exprs = sexprs_to_ts(exprs)
+        exprs = _sexprs_to_ts(exprs)
         return tuple(exprs)
 
     else:
@@ -65,10 +69,12 @@ def view_transform (src, to, in_shape):
     :in_shape is the shape (list/tuple) of the source tensor 
     :returns the new size of the tensor after view transformation
     '''
-    src = to_tuple(src)
+    check_int_tuple(in_shape)
+
+    src = _to_tuple(src)
     assert (len(src) == len(in_shape)), "Source TS does not match input tensor's shape"
-    to = to_tuple(to)
-    print (src, to)
+    to = _to_tuple(to)
+    #print (src, to)
     assert isinstance(in_shape, (list, tuple))
 
     #sub_map = [(d.e, Symbol(f'{i}')) for i, d in enumerate(src)]
@@ -79,7 +85,13 @@ def view_transform (src, to, in_shape):
     return out_shape
 
 
-
+def to_shape (src):
+    '''
+    src: 'b,t,h*d'
+    Lookup each shorthand in cache. 
+    returns: (B, T, H*D)
+    '''
+    return NotImplemented
 
 def permute_transform(src, to):
     '''
@@ -88,8 +100,8 @@ def permute_transform(src, to):
     :to is the target dimension arragement, list of named dim variables
     :returns the index tuple for the permutation
     '''
-    src = to_tuple(src)
-    to = to_tuple(to)
+    src = _to_tuple(src)
+    to = _to_tuple(to)
 
     assert len(src) == len(to), "Source and Target shapes for permutation are not same"
 
@@ -99,15 +111,15 @@ def permute_transform(src, to):
 
     return perm_indices
 
-def expansions_as_dict(expansions):
-    if isinstance(expansions, list):
+def _expansions_as_dict(expansions):
+    if isinstance(expansions, list): #[(T, T*5), (D, D*4)]
         res = expansions
     else:
         assert isinstance(expansions, str) #'k->k*5,t->t*10'
-        expansions = expansions.split(',')
+        expansions = expansions.strip().split(',')
         res = []
         for ex in expansions:
-            t = sexprs_to_ts(ex.split('->'))
+            t = _sexprs_to_ts(ex.strip().split('->'))
             #print(t)
             res.append(t)
             #print (res)
@@ -122,9 +134,9 @@ def expand_transform (src, expansions, in_shape):
     :expansions [(T, T*5), (D, D*4)]
     :returns the expansion shape tuple
     '''
-    src = to_tuple(src)
-    exp_map = expansions_as_dict(expansions)
-    #exp_map = {sexpr_to_ts(s)[0]: sexpr_to_ts(t)[0] for (s, t) in (expansions)}
+    src = _to_tuple(src)
+    exp_map = _expansions_as_dict(expansions)
+    #exp_map = {_sexpr_to_ts(s)[0]: _sexpr_to_ts(t)[0] for (s, t) in (expansions)}
     sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)] # (B, 10), (T, 20), (D, 300)
 
     #print (expansions, exp_map)
