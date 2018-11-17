@@ -4,6 +4,7 @@ sys.path.append('../')
 import numpy as np
 from tsalib import dim_vars
 from tsalib import view_transform as vt, permute_transform as pt, expand_transform as et
+from tsalib import warp
 
 
 B, T, D, K = dim_vars('Batch(b):20 SeqLength(t):10 EmbeddingDim(d):100 K(k):1')
@@ -75,11 +76,29 @@ def test_expand_short():
     expand_shape = et(src=(B,K,T,D), expansions='k->k*5', in_shape=x.shape)
     print (f'expansion shape: {expand_shape}\n')
 
-if __name__ == '__main__':
+def test_warp():
+    x: 'btd' = np.ones((B, T, D))
+    #x = warp(x, 'btd -> b,t,4,d//4 -> b*t,4,d//4', 'vv', debug=True)
+    #assert(x.shape == (B*T,4,D//4))
 
+    x = warp(x, 'btd -> b,t,4,d//4 -> b*t,4,d//4 -> b,t,4,d//4 -> btd', 'vvvv', debug=False)
+    assert(x.shape == (B,T,D))
+
+    import torch
+    y: 'btd' = torch.randn(B, T, D)
+    y = warp(y, 'btd -> b,t,4,d//4 -> b,4,t,d//4', 'vp', debug=True)
+    assert(y.shape == (B,4,T,D//4))
+
+    print ('test_warp: all assertions hold')
+
+
+if __name__ == '__main__':
+    test_warp()
+    '''
     test_reshape()
     test_reshape_short()
     test_permute()
     test_permute_short()
     test_expand()
     test_expand_short()
+    '''

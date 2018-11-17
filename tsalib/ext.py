@@ -1,65 +1,8 @@
 from tsalib.ts import TS, dim_var, dummy_dvar
 from sympy import sympify
+from .utils import _sexprs_to_ts, _to_tuple, check_int_tuple, resolve_to_int_tuple
 
 
-def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
-    '''
-    A single string expression (sexpr) to Tensor Shape expressions (ts)
-    Converts shorthand dummy/empty placeholders to dummy TSs
-    '''
-    if isinstance(e, TS):  
-        t = e
-    else: 
-        assert isinstance(e, str)
-        if e == '' or e =='_':
-            t = dummy_dvar(dummy_idx)
-            dummy_idx += 1
-        else: 
-            #TODO: strict: check if all dim vars in e are previously declared?
-            t = TS(sympify(e))
-
-    return t, dummy_idx
-
-def _sexprs_to_ts(exprs, strict=False):
-    '''
-    String expressions (sexprs) to Tensor Shape expressions (ts)
-    Converts shorthand dummy/empty placeholders to dummy TSs
-    Returns a tuple of TSs
-    '''
-    dummy_idx = 0
-    res = []
-    for e in exprs:
-        t, dummy_idx = _sexpr_to_ts(e, dummy_idx, strict)
-        res.append(t)
-
-    #print (exprs, res)
-    return tuple(res)
-
-
-def _to_tuple (ss):
-    '''
-    :ss is shape string, e.g., ('btd') or ('b,t,d*2')
-    '''
-    if isinstance(ss, (list, tuple)):
-        for s in ss: assert isinstance(s, (TS,int))
-        return tuple(ss)
-
-    elif isinstance(ss, str):
-        if ',' in ss: exprs = ss.strip().split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
-        else: exprs = list(ss)              # 'btd' -> ['b','t','d']
-
-        exprs = _sexprs_to_ts(exprs)
-        return tuple(exprs)
-
-    else:
-        raise ValueError('Unknown type of ss')
-
-def check_int_tuple(s):
-    #print(f'int tuple? {s}')
-    for d in s:
-        try: d = int(d)
-        except:
-            raise ValueError(f'Unable to resolve expression {d}')
 
 def view_transform (src, to, in_shape):
     '''
@@ -72,7 +15,9 @@ def view_transform (src, to, in_shape):
     check_int_tuple(in_shape)
 
     src = _to_tuple(src)
-    assert (len(src) == len(in_shape)), "Source TS does not match input tensor's shape"
+    if (len(src) != len(in_shape)):
+        print (f'{src}, {in_shape}')
+        raise ValueError("Source TS does not match input tensor's shape")
     to = _to_tuple(to)
     #print (src, to)
     assert isinstance(in_shape, (list, tuple))
@@ -81,17 +26,10 @@ def view_transform (src, to, in_shape):
     sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)]
     out_shape = tuple([t.exp.subs(sub_map) if isinstance(t, TS) else int(t) for t in to])
 
-    check_int_tuple(out_shape)
+    out_shape = resolve_to_int_tuple(out_shape)
     return out_shape
 
 
-def to_shape (src):
-    '''
-    src: 'b,t,h*d'
-    Lookup each shorthand in cache. 
-    returns: (B, T, H*D)
-    '''
-    return NotImplemented
 
 def permute_transform(src, to):
     '''
@@ -107,7 +45,7 @@ def permute_transform(src, to):
 
     sub_map = [(d.exp, i) for i, d in enumerate(src)]
     perm_indices = tuple([t.exp.subs(sub_map) for t in to])
-    check_int_tuple(perm_indices)
+    perm_indices = resolve_to_int_tuple(perm_indices)
 
     return perm_indices
 
@@ -149,9 +87,77 @@ def expand_transform (src, expansions, in_shape):
             assert isinstance(v, TS)
             res.append(v.exp.subs(sub_map)) #(T*5) -> 100, (D*4) -> 1200
 
-    res =tuple(res)
-    check_int_tuple(res)
+    res = tuple(res)
+    res = resolve_to_int_tuple(res)
     return res
+
+
+
+def tfm_decompose (tfm_str, tfm_names):
+    '''
+    Decompose a multi-step transform into basic (view, permute, expand) transforms
+    tfm_str  'btd -> b,t,2,d//2 -> b,2,t,d//2'
+    tfm_names 'vp' [first view, then permute transform]
+    '''
+    assert isinstance(tfm_str, str)
+    tfm_symbols = list(tfm_names) # ['v', 't']
+    tfm_symbols_no_c = list(tfm_names.replace('c',''))
+
+    shapes = [t.strip() for t in tfm_str.split('->')]
+    assert len(shapes) >= 2, "Specify at least one transform, e.g., btd->dtb"
+    assert len(tfm_symbols_no_c) == (len(shapes) - 1), "Num of transform descriptions and symbols do not match"
+
+    shapes = [_to_tuple(s) for s in shapes]
+
+    tfm_list = []
+    for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
+        tfm_list.append((tfm_symbols[i], l, r) )
+
+    return tfm_list
+
+
+from .backend import get_backend_by_name, get_backend_for_tensor
+
+def warp (x, tfm_str, tfm_names, backend=None, debug=False):
+    '''
+    Perform a multi-step transform on the tensor x
+    tfm_str  'btd -> b,t,2,d//2 -> b,2,t,d//2 -> b,2,t,^n,d//2'
+    tfm_names 'vp' [first (v)iew, then (p)ermute transform]
+    backend    either a string('numpy', 'tf', 'torch') or the corresponding backend.<class>
+    '''
+    if backend is not None:
+        be = get_backend_by_name(backend)
+    else:
+        be = get_backend_for_tensor(x)
+
+    tfm_list = tfm_decompose(tfm_str, tfm_names)
+
+    #print (f'tfm list {tfm_list}')
+
+    ret = x
+    for sym, l, r in tfm_list:
+        if debug:
+            print(f'*** processing transform.. {sym}\n {l} -> {r}')
+        if sym == 'v' or sym == 'r': #view transform
+            new_shape = view_transform(l, r, ret.shape)
+            ret = be.view(x, new_shape)
+        elif sym == 'p' or sym == 't':
+            perm_indices = permute_transform(l, r)
+            ret = be.transpose(ret, perm_indices)
+        elif sym == 'e':
+            expand_shape = expand_transform(l, r)
+            ret = be.expand(ret, expand_shape)
+        elif sym == 'c': 
+            ret = be.contiguous(ret)
+        else:
+            assert False, f'Invalid transform symbol {sym}'
+        if debug:
+            print (f'after transform shape is: {be.shape(ret)}')
+    return ret
+
+
+
+
 
 
 
