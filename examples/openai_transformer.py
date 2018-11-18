@@ -25,11 +25,8 @@ from allennlp.common.from_params import FromParams
 
 import sys
 sys.path.append('../')
-from tsalib import TS
-B = TS('Batch')
-T = TS('SeqLength')
-D = TS('EmbeddingDimension')
-H = TS('NumHeads')
+from tsalib import dim_vars, warp
+B, T, D, H = dim_vars('Batch SeqLength EmbedDim NumHeads')
 
 def gelu(x: torch.Tensor) -> torch.Tensor:
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
@@ -113,11 +110,16 @@ class Attention(torch.nn.Module):
         res: (B,H,T,D) = torch.matmul(w, v)
         return res
 
-    def merge_heads(self, x: (B,H,T,D)):
+    def merge_heads_old(self, x: (B,H,T,D)):
         # pylint: disable=no-self-use
         x: (B,T,H,D) = x.permute(0, 2, 1, 3).contiguous()
         new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),)
         res: (B,T,H*D) = x.view(*new_x_shape)  # in Tensorflow implem: fct merge_states
+        return res
+
+    def merge_heads(self, x: (B,H,T,D)):
+        # pylint: disable=no-self-use
+        res = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv') #permute, then contiguous, then view transforms
         return res
 
     def split_heads(self, x: (B, T, D), k: bool = False):

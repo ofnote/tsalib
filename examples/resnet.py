@@ -9,8 +9,8 @@ import sys
 sys.path.append('../')
 from tsalib import dim_vars, declare_common_dim_vars
 
-B, D, V, Dh, T, Te, Td, C, Ci, Co = declare_common_dim_vars()
-H, W, C, Ex = dim_vars('Height Width Channels BlockExpansion')
+B, C, Ci, Co = dim_vars('Batch Channels ChannelsIn ChannelsOut')
+H, W, Ex = dim_vars('Height Width BlockExpansion')
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']

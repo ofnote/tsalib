@@ -4,12 +4,8 @@
 
 import sys
 sys.path.append('../')
-from tsalib.ts import TS
-B = TS('Batch')
-T = TS('SeqLength')
-D1 = TS('Tensor1Dim')
-D2 = TS('Tensor2Dim')
-Dp = TS('ProjectedDim')
+from tsalib import dim_vars
+
 
 from overrides import overrides
 import torch
@@ -75,31 +71,68 @@ class MultiHeadedSimilarity(SimilarityFunction):
         if tensor_2_projected_dim % num_heads != 0:
             raise ConfigurationError("Projected dimension not divisible by number of heads: %d, %d"
                                      % (tensor_2_projected_dim, num_heads))
+
+        # tsalib dim vars defined locally (to minimize changes from original implementation)
+        # better: define and store them in the config dictionary and use everywhere
+        self.D1, self.D2, self.D1p, self.D2p = dim_vars('D1:{0} D2:{1} D1p:{2} D2p:{3}'
+                        .format(tensor_1_dim, tensor_2_dim, tensor_1_projected_dim, tensor_2_projected_dim))
         
-        self._tensor_1_projection: (D1, Dp) = Parameter(torch.Tensor(tensor_1_dim, tensor_1_projected_dim))
-        self._tensor_2_projection: (D2, Dp) = Parameter(torch.Tensor(tensor_2_dim, tensor_2_projected_dim))
+        # original impl
+        self._tensor_1_projection = Parameter(torch.Tensor(tensor_1_dim, tensor_1_projected_dim))
+        self._tensor_2_projection = Parameter(torch.Tensor(tensor_2_dim, tensor_2_projected_dim))
+        
+        # with tsalib:
+        self._tensor_1_projection: (self.D1, self.D1p) = Parameter(torch.Tensor(self.D1, self.D1p))
+        self._tensor_2_projection: (self.D2, self.D2p) = Parameter(torch.Tensor(self.D2, self.D2p))
+
+
         self.reset_parameters()
 
     def reset_parameters(self):
         torch.nn.init.xavier_uniform_(self._tensor_1_projection)
         torch.nn.init.xavier_uniform_(self._tensor_2_projection)
 
-    @overrides
-    def forward(self, tensor_1: (B, T, D1), tensor_2: (B, T, D1)) :
+    def forward_old(self, tensor_1: 'b,t,d1', tensor_2: 'b,t,d2') :
+        # This is the original `forward` implementation
+        # note the shape 'surgery' below
         H = self.num_heads
+        B, T = dim_vars('Batch(b):{tensor_1.shape(0)} T(t):{tensor_1.shape(1)}')
+        D1, D2, D1p, D2p = self.D1, self.D2, self.D1p, self.D2p
 
-        projected_tensor_1: (B, T, Dp) = torch.matmul(tensor_1, self._tensor_1_projection)
-        projected_tensor_2: (B, T, Dp) = torch.matmul(tensor_2, self._tensor_2_projection)
+        projected_tensor_1: (B, T, D1p) = torch.matmul(tensor_1, self._tensor_1_projection)
+        projected_tensor_2: (B, T, D2p) = torch.matmul(tensor_2, self._tensor_2_projection)
 
         # Here we split the last dimension of the tensors from (..., projected_dim) to
         # (..., num_heads, projected_dim / num_heads), using tensor.view().
         last_dim_size = projected_tensor_1.size(-1) // H
         new_shape = list(projected_tensor_1.size())[:-1] + [H, last_dim_size]
-        split_tensor_1: (B, T, H, Dp // H) = projected_tensor_1.view(*new_shape)
+        split_tensor_1: (B, T, H, D1p // H) = projected_tensor_1.view(*new_shape)
         
         last_dim_size = projected_tensor_2.size(-1) // H
         new_shape = list(projected_tensor_2.size())[:-1] + [H, last_dim_size]
-        split_tensor_2: (B, T, H, Dp // H) = projected_tensor_2.view(*new_shape)
+        split_tensor_2: (B, T, H, D2p // H) = projected_tensor_2.view(*new_shape)
+
+        # And then we pass this off to our internal similarity function.  Because the similarity
+        # functions don't care what dimension their input has, and only look at the last dimension,
+        # we don't need to do anything special here.  It will just compute similarity on the
+        # projection dimension for each head, returning a tensor of shape (..., num_heads).
+        ret : (B, T, H) = self._internal_similarity(split_tensor_1, split_tensor_2)
+        return ret
+
+    @overrides
+    def forward(self, tensor_1: 'b,t,d1', tensor_2: 'b,t,d2') :
+        # Cleaner implementation with tsalib
+
+        #B, T, H defined locally here (to minimize changes to original implementation)
+        # better: define and store them in the config dictionary and use everywhere
+        B, T, H = dim_vars(f'Batch(b):{tensor_1.shape(0)} T(t):{tensor_1.shape(1)} H(h):{self.num_heads}')
+        D1, D2, D1p, D2p = self.D1, self.D2, self.D1p, self.D2p
+
+        projected_tensor_1: (B, T, D1p) = torch.matmul(tensor_1, self._tensor_1_projection)
+        projected_tensor_2: (B, T, D2p) = torch.matmul(tensor_2, self._tensor_2_projection)
+
+        split_tensor_1 = projected_tensor_1.view(B, T, H, D1p // H)
+        split_tensor_2  = projected_tensor_2.view(B, T, H, D2p // H)
 
         # And then we pass this off to our internal similarity function.  Because the similarity
         # functions don't care what dimension their input has, and only look at the last dimension,

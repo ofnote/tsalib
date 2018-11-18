@@ -72,7 +72,7 @@ assert y.size() == (B*C,H,W)
 
 ## Installation
 
-`pip install tsalib`
+`pip install [--upgrade] tsalib`
 
 ## Getting Started
 

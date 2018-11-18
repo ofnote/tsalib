@@ -125,8 +125,15 @@ def tfm_decompose (tfm_str, tfm_names):
     shapes = [_to_tuple(s) for s in shapes]
 
     tfm_list = []
-    for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
-        tfm_list.append((tfm_symbols[i], l, r) )
+    #for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
+    #    tfm_list.append((tfm_symbols[i], l, r) )
+    curr_shape_pos = 0
+    for sym in tfm_symbols:
+        if sym == 'c': tfm_list.append((sym, None, None))
+        else:
+            l, r = shapes[curr_shape_pos: curr_shape_pos+2]
+            tfm_list.append((sym, l, r))
+            curr_shape_pos += 1
 
     return tfm_list
 
