@@ -4,7 +4,7 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 TSAs enable us to label and verify tensor variables shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
-See updates [here](#change-log).
+See Changelog [here](#change-log).
 
 ## Introduction
 
@@ -17,39 +17,6 @@ See updates [here](#change-log).
 
 TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
-## Dimension Variables
-
-Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
-
-TSAs may be be represented as
-* a tuple `(B,H,D)` [long form]
-* a string `'b,h,d'` (compact notation) (or simply `'bhd'`)
-
-Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
-
-```python
-from tsalib import dim_vars as dvs
-from tsalib import view_transform as vt
-
-#declare dimension variables
-B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
-...
-#create tensors using dimension variables (interpret dim vars as integers)
-x: (B, C, H, W) = torch.randn(B, C, H, W) 
-#perform tensor transformations
-x: (B, C, H // 2, W // 2) = maxpool(x) 
-#check symbolic assertions over TSAs, without knowing concrete shapes
-assert x.size() == (B, C, H // 2, W // 2)
-
-#reshape/permute using shorthand (einsum-like) notation
-x1 = x.view(vt(',,kl', ',,k*l', x.size()))
-assert x1.size() == (B, C, (H//2)*(W//2))
-# altneratively : super convenient reshapes!
-x2 = x.view ((B,C, (H//2)*(W//2)))
-
-
-``` 
-
 Shape annotations/assertions turn out to be useful in many ways. 
 * They help us to quickly verify the variable shapes when writing new transformations or modifying existing modules. 
 * Assertions and annotations remain the same even if the concrete dimension lengths change.
@@ -57,6 +24,50 @@ Shape annotations/assertions turn out to be useful in many ways.
 * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 * They serve as useful documentation to help others understand or extend your module.
+
+
+## Dimension Variables
+
+Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
+
+TSAs may be be represented as
+* a tuple `(B,H,D)` [long form]
+* a string `'b,h,d'` (compact notation) (or simply `'bhd'`)
+* a string with anonymous dimensions (`',h,'` is a 3-d tensor)
+
+Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+
+```python
+from tsalib import dim_vars as dvs
+from tsalib import permute_transform as pt
+
+#declare dimension variables
+B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
+...
+# create tensors using dimension variables (interpret dim vars as integers)
+x: (B, C, H, W) = torch.randn(B, C, H, W) 
+# perform tensor transformations
+x: (B, C, H // 2, W // 2) = maxpool(x) 
+# check symbolic assertions over TSAs, without knowing concrete shapes
+assert x.size() == (B, C, H // 2, W // 2)
+
+# super convenient reshapes!
+x1 = x.view ((B,C, (H//2)*(W//2)))
+assert x1.size() == (B, C, (H//2)*(W//2))
+
+# permute using shorthand (einsum-like) notation,
+# with anonymous dimensions
+x: (B, C, H, W)
+x1 = x.permute(pt(',c,,', ',,,c'))
+assert x1.size() == (B, H, W, C)
+
+# sequence of multiple transformations inline
+# here: a sequence of a permute ('p') and view ('v') transformations
+y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
+assert y.size() == (B*C,H,W)
+
+
+``` 
 
 
 ## Installation
@@ -72,18 +83,15 @@ from tsalib import dim_var as dv, dim_vars as dvs, dim_vars_shape as dvs2
 import numpy as np
 ```
 
-### Declare Dimension Variables, Expressions over them
+### Declare Dimension Variables
 ```python
-B, C, D, H, W = dv('Batch'), dv('Channels'), dv('EmbedDim'), dv('Height'), dv('Width')
-#or
-B, C, D, H, W = dvs('Batch Channels EmbedDim Height Width')
 #or declare dim vars with default integer values (optional)
 B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
-#or provide *shorthand* names for dim vars
+#or provide optional *shorthand* names for dim vars, default values
 B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w)')
 
 # switch from using config constants to using dimension vars
-B, C, D = dvs2('Batch(b) Channels(c) EmbedDim(d)', (config.batch_size, config.num_channels, config.embed_dim))
+B, C, D = dvs('Batch(b):{0} Channels(c):{1} EmbedDim(d):{2}'.format(config.batch_size, config.num_channels, config.embed_dim))
 
 # TSAs are tuples over dimension variables
 S1 = (B, C, D)
@@ -154,13 +162,23 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 ```
 
-Use dimension names instead of cryptic indices.
+Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
 ```python
-ax = (2, B, D).index(B) #ax = 1
-c: (2, D) = np.mean(b, axis=ax) 
-print(f'after mean along axis {B}={ax}: {(2,D)}: {c.shape}') #... axis Batch=1: (2, EmbedDim): (2, 3)
+from tsalib import drop_dims as dd
+b: (2, B, D)
+c: (2, D) = np.mean(b, axis=dd('2bd->2d')) #axis = 1
 ```
 
+### Sequence of shape transformations: `warp` operator
+
+The `warp` operator allows squeezing in multiple shape transformations in a single line using the shorthand notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p').
+
+```python
+    x: 'btd' = torch.randn(B, T, D)
+    y = warp(x, 'btd -> b,t,4,d//4 ->  b,4,t,d//4 ', 'vvp') #2 (v)iew transforms, then (p)ermute transform
+    assert(y.shape == (B,4,T,D//4))
+```
+Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily.
 
 See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
 
@@ -199,6 +217,7 @@ Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter]
 
 ## Change Log
 
+* [18 Nov 2018] Support for `warp`, `drop_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
 * [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
 * [25 Oct 2018] Initial Release

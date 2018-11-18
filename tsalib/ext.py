@@ -91,6 +91,21 @@ def expand_transform (src, expansions, in_shape):
     res = resolve_to_int_tuple(res)
     return res
 
+def drop_dims (tfm):
+    '''
+    tfm: 'btd->b'
+    '''
+    src, to = tfm.split('->')
+    src = _to_tuple(src.strip())
+    to = _to_tuple(to.strip())
+
+    drops = []
+    #check src includes all dims in to
+    for i, d in enumerate(src):
+        if d not in to:
+            drops.append(i)
+
+    return drops
 
 
 def tfm_decompose (tfm_str, tfm_names):
