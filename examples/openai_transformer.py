@@ -138,12 +138,9 @@ class Attention(torch.nn.Module):
         H = self.n_head
         
         x: (B, T, 3*D) = self.c_attn(x)
-        qkv = x.split(D, dim=2)
+        query: (B, T, D); key: (B, T, D); value: (B, T, D)
+        query, key, value = x.split(D, dim=2)
 
-        query: (B, T, D) = qkv[0]
-        key: (B, T, D) = qkv[1]
-        value: (B, T, D) = qkv[2]
-        
         query: (B, H, T, D // H) = self.split_heads(query)
         key: (B, H, D//H, T) = self.split_heads(key, k=True)
         value: (B, H, T, D // H) = self.split_heads(value)

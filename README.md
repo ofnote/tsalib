@@ -69,6 +69,10 @@ assert y.size() == (B*C,H,W)
 
 ``` 
 
+## Examples
+
+The [examples](examples) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](examples/resnet.py), [OpenAI Transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
+
 
 ## Installation
 
@@ -93,10 +97,6 @@ B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w
 # switch from using config constants to using dimension vars
 B, C, D = dvs('Batch(b):{0} Channels(c):{1} EmbedDim(d):{2}'.format(config.batch_size, config.num_channels, config.embed_dim))
 
-# TSAs are tuples over dimension variables
-S1 = (B, C, D)
-# we can always verify TSAs against concrete shapes
-assert S1 == (48, 3, 300)
 ```
 
 ### Use Dimension Variables to declare Tensors
@@ -104,10 +104,10 @@ assert S1 == (48, 3, 300)
 Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` uniformly throughout your code.
 
 ```python
-B, D = dvs('Batch:48 EmbedDim:300')
+B, D = dvs('Batch:{batch_size} EmbedDim:{embed_dim}}')
 #declare a 2-D tensor of shape(48, 300)
 x = torch.randn(B, D)
-#assertions over dimension variables (not exact values)
+#assertions over dimension variables (code unchanged even if dim sizes change)
 assert x.size() == (B, D)
 ```
 
@@ -175,17 +175,14 @@ The `warp` operator allows squeezing in multiple shape transformations in a sing
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
-    y = warp(x, 'btd -> b,t,4,d//4 ->  b,4,t,d//4 ', 'vvp') #2 (v)iew transforms, then (p)ermute transform
+    y = warp(x, 'btd -> b,t,4,d//4 ->  b,4,t,d//4 ', 'vp') #(v)iew, then (p)ermute, transform
     assert(y.shape == (B,4,T,D//4))
 ```
-Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily.
+Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily (see [backend.py](tsalib/backend.py)).
 
 See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
 
 
-## Examples
-
- The [examples](examples) directory contains TS annotations of a few well-known, complex neural architectures: [Resnet](examples/resnet.py), [OpenAI Transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 ## Dependencies
 
