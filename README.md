@@ -1,21 +1,21 @@
 # Tensor Shape Annotations Library (tsalib)
 
 Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **symbolic** shapes over **dimension variables**.
-These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
+These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
+
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 See Changelog [here](#change-log).
 
 ## Introduction
 
- Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`) or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
+ Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
-`tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways: 
+`tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
 - as first-class annotations of tensor variables,
 - to write `symbolic` shape `assert`ions and tensor constructors
 - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
 
-TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 Shape annotations/assertions turn out to be useful in many ways. 
 * Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
@@ -26,11 +26,12 @@ Shape annotations/assertions turn out to be useful in many ways.
 * They serve as useful documentation to help others understand or extend your module.
 
 
+
 ## Dimension Variables
 
 Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
 
-TSAs may be be represented as
+TSAs may be represented as
 * a tuple `(B,H,D)` [long form]
 * a string `'b,h,d'` (shorthand shape notation) (or simply `'bhd'`)
 * a string with anonymous dimensions (`',h,'` is a 3-d tensor)
@@ -55,13 +56,14 @@ assert x.size() == (B, C, H // 2, W // 2)
 x1 = x.view ((B,C, (H//2)*(W//2)))
 assert x1.size() == (B, C, (H//2)*(W//2))
 
-# permute using shorthand (einsum-like) notation,
+# permute using shorthand notation,
 # with anonymous dimensions
 x: (B, C, H, W)
 x1 = x.permute(pt(',c,,', ',,,c'))
 assert x1.size() == (B, H, W, C)
 
-# sequence of multiple transformations inline
+# A powerful one-stop `warp` operator
+# specify a composition of multiple transformations inline
 # here: a sequence of a permute ('p') and view ('v') transformations
 y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
 assert y.size() == (B*C,H,W)
@@ -152,11 +154,12 @@ In general, use `tsalib.view_transform` to specify view changes declaratively.
 
 Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
 ```python 
+    from tsalib import permute_transform as pt
+
     # long form:
-    perm_indices = permute_transform(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
+    perm_indices = pt(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
     x = x.transpose(perm_indices) #(10, 50, 300, 30) -> (300, 50, 10, 30)
     
-    from tsalib import permute_transform as pt
     #or, compactly:
     x = x.transpose(pt('btdk', 'dtbk'))
     #or, super-compact:
@@ -185,14 +188,13 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
 
-
 ## Dependencies
 
-`sympy`. A library for building symbolic expressions in Python.
+`sympy`. A library for building symbolic expressions in Python is the only dependency.
 
-Tested with Python 3.6. For writing type annotations inline, Python >= 3.5 is required.
+Tested with Python 3.6. Core API should work with Python 2. Contributions welcome.
 
-Python >= 3.5 allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
+For writing type annotations inline, Python >= 3.5 is required which allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 
 ## Best Practices
@@ -215,6 +217,7 @@ Python >= 3.5 allows optional type annotations for variables. These annotations 
 Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
 
 ## Change Log
+The library is in an initial development phase. Contributions/feedback welcome!
 
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb).
 * [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
