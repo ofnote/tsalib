@@ -4,7 +4,7 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
-`tsalib` API guide notebook is [here](notebooks/tsalib.ipynb)
+`tsalib` API guide notebook is [here](notebooks/tsalib.ipynb).
 
 See Changelog [here](#change-log).
 
