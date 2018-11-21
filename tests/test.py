@@ -3,7 +3,7 @@ sys.path.append('../')
 
 #from typing import List, Sequence, TypeVar
 
-from tsalib import dim_var, dim_vars, declare_common_dim_vars
+from tsalib import dim_var, dim_vars
 
 
 # global declaration of dimension vars

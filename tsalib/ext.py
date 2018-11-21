@@ -91,7 +91,7 @@ def expand_transform (src, expansions, in_shape):
     res = resolve_to_int_tuple(res)
     return res
 
-def drop_dims (tfm):
+def agg_dims (tfm):
     '''
     tfm: 'btd->b'
     '''
@@ -105,7 +105,7 @@ def drop_dims (tfm):
         if d not in to:
             drops.append(i)
 
-    return drops
+    return tuple(drops)
 
 
 def tfm_decompose (tfm_str, tfm_names):

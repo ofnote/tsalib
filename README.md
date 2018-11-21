@@ -1,7 +1,7 @@
 # Tensor Shape Annotations Library (tsalib)
 
-Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **shape expressions** over **dimension variables** to model matrix/tensor variable shapes.
-TSAs enable us to label and verify tensor variables shapes as well as write more *fluent* shape transformations and tensor operations. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
+Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **symbolic** shapes over **dimension variables**.
+These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging and improves overall developer productivity when writing tensor programs. 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 See Changelog [here](#change-log).
@@ -10,16 +10,16 @@ See Changelog [here](#change-log).
 
  Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`) or when creating a new `RNN` cell. There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
-`tsalib` comes to our rescue here. It allows you to write shape expressions over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways: 
+`tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing the shape of tensor variables. These expressions can be used in multiple ways: 
 - as first-class annotations of tensor variables,
 - to write `symbolic` shape `assert`ions and tensor constructors
-- to specify shape transformations (`reshape`, `permute`, `expand`) or tensor product operations (`matmult`) succinctly. 
+- to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
 
 TSAs expose the typically *invisible* tensor shape types, leading to improved productivity across the board. 
 
 Shape annotations/assertions turn out to be useful in many ways. 
-* They help us to quickly verify the variable shapes when writing new transformations or modifying existing modules. 
-* Assertions and annotations remain the same even if the concrete dimension lengths change.
+* Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
+* Assertions and annotations remain the same even if the actual dimension sizes change.
 * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
 * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
@@ -32,7 +32,7 @@ Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B
 
 TSAs may be be represented as
 * a tuple `(B,H,D)` [long form]
-* a string `'b,h,d'` (compact notation) (or simply `'bhd'`)
+* a string `'b,h,d'` (shorthand shape notation) (or simply `'bhd'`)
 * a string with anonymous dimensions (`',h,'` is a 3-d tensor)
 
 Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
@@ -69,21 +69,23 @@ assert y.size() == (B*C,H,W)
 
 ``` 
 
-## Examples
+## Documentation
 
-The [examples](examples) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](examples/resnet.py), [OpenAI Transformer](examples/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
+The following [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library. Contains examples for most of the API calls.
+
+## Model Examples
+
+The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 
 ## Installation
 
 `pip install [--upgrade] tsalib`
 
-## Getting Started
-
-See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
+## API
 
 ```python
-from tsalib import dim_var as dv, dim_vars as dvs, dim_vars_shape as dvs2
+from tsalib import dim_vars as dvs
 import numpy as np
 ```
 
@@ -127,7 +129,7 @@ v: (B, C, H, W) = torch.randn(B, C, h, w)
 x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v) 
 ```
 
-### Use TSAs to make matrix operations compact and explicit
+### Use TSAs to make shape transformations compact and explicit
 
 
 Avoid explicit shape computations for `reshaping`. 
@@ -166,7 +168,7 @@ Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ..
 ```python
 from tsalib import drop_dims as dd
 b: (2, B, D)
-c: (2, D) = np.mean(b, axis=dd('2bd->2d')) #axis = 1
+c: (2, D) = np.mean(b, axis=dd('2bd->d')) #axis = [0,1]
 ```
 
 ### Sequence of shape transformations: `warp` operator
@@ -180,7 +182,7 @@ The `warp` operator allows squeezing in multiple shape transformations in a sing
 ```
 Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily (see [backend.py](tsalib/backend.py)).
 
-See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples of basic and extended usage.
+See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples.
 
 
 
@@ -214,7 +216,8 @@ Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter]
 
 ## Change Log
 
-* [18 Nov 2018] Support for `warp`, `drop_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
+* [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb).
+* [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
 * [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
 * [25 Oct 2018] Initial Release
