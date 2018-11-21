@@ -71,7 +71,7 @@ assert y.size() == (B*C,H,W)
 
 ## Documentation
 
-The following [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library. Contains examples for most of the API calls.
+The following [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API.
 
 ## Model Examples
 
@@ -166,9 +166,9 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
 ```python
-from tsalib import drop_dims as dd
+from tsalib import agg_dims as agd
 b: (2, B, D)
-c: (2, D) = np.mean(b, axis=dd('2bd->d')) #axis = [0,1]
+c: (2, D) = np.mean(b, axis=agd('2bd->d')) #axis = (0,1)
 ```
 
 ### Sequence of shape transformations: `warp` operator
@@ -182,7 +182,7 @@ The `warp` operator allows squeezing in multiple shape transformations in a sing
 ```
 Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily (see [backend.py](tsalib/backend.py)).
 
-See [tests/test.py](tests/test.py) and [tests/test_ext.py](tests/test_ext.py) for complete examples.
+See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
 
 
