@@ -221,7 +221,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
 
 ## Change Log
-The library is in an initial development phase. Contributions/feedback welcome!
+The library is in its early phases. Contributions/feedback welcome!
 
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
 * [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
