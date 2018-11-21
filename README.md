@@ -4,6 +4,7 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
+`tsalib` API guide notebook is [here](notebooks/tsalib.ipynb)
 
 See Changelog [here](#change-log).
 
@@ -73,7 +74,7 @@ assert y.size() == (B*C,H,W)
 
 ## Documentation, Design Principles
 
-The following [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API.
+This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API.
 
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
