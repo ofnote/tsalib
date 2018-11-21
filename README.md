@@ -71,9 +71,13 @@ assert y.size() == (B*C,H,W)
 
 ``` 
 
-## Documentation
+## Documentation, Design Principles
 
 The following [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API.
+
+- `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes.
+- The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
+- Avoid deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
 
 ## Model Examples
 
@@ -147,23 +151,23 @@ In general, use `tsalib.view_transform` to specify view changes declaratively.
     x = np.ones((B, T, D))
     from tsalib import view_transform as vt
     #or, compact form:
-    x = x.reshape(vt('btd', 'b,t,4,d//4', x.shape)) #(20, 10, 300) -> (20, 10, 4, 75)
+    y = x.reshape(vt('btd -> b,t,4,d//4', x.shape)) #(20, 10, 300) -> (20, 10, 4, 75)
+    assert y.shape == (B, T, 4, D//4)
     #or, super-compact, using anonymous dimensions:
-    x = x.reshape(vt(',,d', ',,4,d//4', x.shape))
+    y = x.reshape(vt(',,d -> ,,4,d//4', x.shape))
 ```
 
 Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
 ```python 
     from tsalib import permute_transform as pt
 
-    # long form:
-    perm_indices = pt(src=(B,T,D,K), to=(D,T,B,K)) #(2, 1, 0, 3)
-    x = x.transpose(perm_indices) #(10, 50, 300, 30) -> (300, 50, 10, 30)
-    
-    #or, compactly:
-    x = x.transpose(pt('btdk', 'dtbk'))
+    x = np.ones ((B, T, D, K))
+    perm_indices = pt('btdk -> dtbk') # (2, 1, 0, 3)
+    y = x.transpose(perm_indices)
+    assert y.shape == (D, T, B, K)
+
     #or, super-compact:
-    x = x.transpose(pt('b,,d,', 'd,,b,'))
+    y = x.transpose(pt('b,,d, -> d,,b,'))
 
 ```
 
@@ -219,7 +223,7 @@ Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter]
 ## Change Log
 The library is in an initial development phase. Contributions/feedback welcome!
 
-* [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb).
+* [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
 * [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
 * [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).

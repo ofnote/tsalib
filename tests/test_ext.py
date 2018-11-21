@@ -3,7 +3,11 @@ sys.path.append('../')
 
 import numpy as np
 from tsalib import dim_vars
-from tsalib import view_transform as vt, permute_transform as pt, expand_transform as et
+from tsalib import view_transform as vt
+from tsalib.ext import _view_transform as _vt
+from tsalib import permute_transform as pt
+from tsalib.ext import _permute_transform as _pt
+from tsalib import expand_transform as et
 from tsalib import warp
 
 
@@ -32,18 +36,18 @@ def test_reshape_short():
     x: (B,T,D) = np.ones((B, T, D))
     h = 4
     #print (f'reshape from "btd" -> "b,t,4,d//4"')
-    x = x.reshape(vt('btd', f'b,t,{h},d//{h}', x.shape))
+    x = x.reshape(vt(f'btd -> b,t,{h},d//{h}', x.shape))
     #print (f'After transform, x : {x.shape}\n')
     assert x.shape == (B, T, h, D//h)
 
     #print (f'reshape from "b,t,4,k" -> "b*t,4,k"')
-    x1 = x.reshape(vt('b,t,4,k', 'b*t,4,k', x.shape))
+    x1 = x.reshape(vt('b,t,4,k -> b*t,4,k', x.shape))
     #print (f'After transform, x : {x1.shape}\n')
     assert x1.shape == (B*T, h, D//h)
     
 
     #print (f'reshape from "b,t,," -> "b*t,,"')
-    x1 = x.reshape(vt('b,t,,', 'b*t,,', x.shape))
+    x1 = x.reshape(vt('b,t,, -> b*t,,', x.shape))
     #print (f'After transform, x : {x1.shape}\n')
     assert x1.shape == (B*T, h, D//h)
 
@@ -56,7 +60,7 @@ def test_permute():
     x: (B,T,D,K) = np.ones((B, T, D, K))
 
     #print (f'\nPermuting from {(B,T,D,K)} to {(D,T,B,K)}')
-    perm_indices = pt(src=(B,T,D,K), to=(D,T,B,K))
+    perm_indices = _pt(src=(B,T,D,K), to=(D,T,B,K))
     x = x.transpose(perm_indices)
     #print ('permutation order:', perm_indices)
     assert perm_indices == (2,1,0,3)
@@ -69,17 +73,17 @@ def test_permute():
 def test_permute_short():
     x: (B,T,D,K) = np.ones((B, T, D, K))
     #print (f'\nTesting Permute (shorthand): from "btdk"({x.shape}) to "dtbk"')
-    x = x.transpose(pt('btdk','dtbk'))
+    x = x.transpose(pt('btdk -> dtbk'))
     #print (f'After transform, x : {x.shape}\n')
     assert x.shape == (D,T,B,K)
 
     #print (f'\nTesting Permute (shorthand): from "d_b_"({x.shape}) to "b_d_"')
-    x = x.transpose(pt('d_b_','b_d_'))
+    x = x.transpose(pt('d_b_ -> b_d_'))
     #print (f'After transform, x : {x.shape}\n')
     assert x.shape == (B,T,D,K)
 
     x: (B, C, H, W) = np.ones((B, C, H, W))
-    x1 = x.transpose(pt(',c,,', ',,,c'))
+    x1 = x.transpose(pt(',c,, -> ,,,c'))
     assert x1.shape == (B, H, W, C)
     print ('test_permute_short: all assertions hold')
 
@@ -122,9 +126,9 @@ def test_warp():
     print ('test_warp: all assertions hold')
 
 def test_drop ():
-    from tsalib import drop_dims as dd
-    assert dd('2bd->2d') == [1]
-    assert dd('2bd->2') == [1,2]
+    from tsalib import agg_dims as agd
+    assert agd('2bd->2d') == (1,)
+    assert agd('2bd->2') == (1,2)
     print ('test_drop: all assertions hold')
 
 

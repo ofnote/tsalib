@@ -4,7 +4,7 @@ from .utils import _sexprs_to_ts, _to_tuple, check_int_tuple, resolve_to_int_tup
 
 
 
-def view_transform (src, to, in_shape):
+def _view_transform (src, to, in_shape):
     '''
     View Transform
     :src is the current view of the tensor
@@ -29,9 +29,16 @@ def view_transform (src, to, in_shape):
     out_shape = resolve_to_int_tuple(out_shape)
     return out_shape
 
+def view_transform (tfm, in_shape):
+    '''
+    View transform
+    :tfm is the shorthand representation of the transform ('btd -> b,t*2,d//2')
+    '''
+    l, r = tfm.split('->')
+    return _view_transform(l.strip(), r.strip(), in_shape)
 
 
-def permute_transform(src, to):
+def _permute_transform(src, to):
     '''
     Permute Transform
     :src is the current dimension arrangement, list of named dim variables
@@ -48,6 +55,15 @@ def permute_transform(src, to):
     perm_indices = resolve_to_int_tuple(perm_indices)
 
     return perm_indices
+
+
+def permute_transform (tfm):
+    '''
+    Permute transform
+    :tfm is the shorthand representation of the transform (',t,d -> ,d,t')
+    '''
+    l, r = tfm.split('->')
+    return _permute_transform(l.strip(), r.strip())
 
 def _expansions_as_dict(expansions):
     if isinstance(expansions, list): #[(T, T*5), (D, D*4)]
@@ -125,11 +141,15 @@ def tfm_decompose (tfm_str, tfm_names):
     shapes = [_to_tuple(s) for s in shapes]
 
     tfm_list = []
+    
     #for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
     #    tfm_list.append((tfm_symbols[i], l, r) )
-    curr_shape_pos = 0
+
+    curr_shape_pos = 0 #count current tfm's position (handle implicit contiguous)
     for sym in tfm_symbols:
-        if sym == 'c': tfm_list.append((sym, None, None))
+        #contiguous transform
+        if sym == 'c': 
+            tfm_list.append((sym, None, None))
         else:
             l, r = shapes[curr_shape_pos: curr_shape_pos+2]
             tfm_list.append((sym, l, r))
@@ -161,10 +181,10 @@ def warp (x, tfm_str, tfm_names, backend=None, debug=False):
         if debug:
             print(f'*** processing transform.. {sym}\n {l} -> {r}')
         if sym == 'v' or sym == 'r': #view transform
-            new_shape = view_transform(l, r, ret.shape)
+            new_shape = _view_transform(l, r, ret.shape)
             ret = be.view(x, new_shape)
         elif sym == 'p' or sym == 't':
-            perm_indices = permute_transform(l, r)
+            perm_indices = _permute_transform(l, r)
             ret = be.transpose(ret, perm_indices)
         elif sym == 'e':
             expand_shape = expand_transform(l, r)
