@@ -32,10 +32,10 @@ Shape annotations/assertions turn out to be useful in many ways.
 
 Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
 
-TSAs may be represented as
+TSAs may be represented as (shorthand doc [here](notebooks/shorthand.md))
 * a tuple `(B,H,D)` [long form]
 * a string `'b,h,d'` (shorthand shape notation) (or simply `'bhd'`)
-* a string with anonymous dimensions (`',h,'` is a 3-d tensor)
+* a string with anonymous dimensions (`',h,'` is a 3-d tensor).
 
 Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
@@ -73,11 +73,15 @@ assert y.size() == (B*C,H,W)
 
 ``` 
 
+## Installation
+
+`pip install [--upgrade] tsalib`
+
 ## Documentation, Design Principles
 
-This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API.
+This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The shorthand notation documention is [here](notebooks/shorthand.md).
 
-- `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes.
+- `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
 - Avoid deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
 
@@ -86,9 +90,6 @@ This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for th
 The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 
-## Installation
-
-`pip install [--upgrade] tsalib`
 
 ## API
 
@@ -184,7 +185,7 @@ c: (2, D) = np.mean(b, axis=agd(',,d->d')) #axis = (0,1)
 
 ### Sequence of shape transformations: `warp` operator
 
-The `warp` operator allows squeezing in multiple shape transformations in a single line using the shorthand notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p').
+The `warp` operator allows squeezing in multiple shape transformations in a single line using the shorthand notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
@@ -227,6 +228,7 @@ Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter]
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
+* [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier.
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
 * [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
