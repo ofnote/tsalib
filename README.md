@@ -50,7 +50,8 @@ B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256')
 x: (B, C, H, W) = torch.randn(B, C, H, W) 
 # perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
-# check symbolic assertions over TSAs, without knowing concrete shapes
+# check symbolic assertions over TSAs
+# assertions don't change even if dim sizes change
 assert x.size() == (B, C, H // 2, W // 2)
 
 # super convenient reshapes!
@@ -124,6 +125,7 @@ assert x.size() == (B, D)
 ### Use TSAs to annotate variables on-the-go (Python 3)
 
 ```python
+B, D = get_dim_vars('b d') #lookup pre-declared dim vars
 a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
 
 b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
@@ -132,6 +134,7 @@ b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
 Arithmetic over dimension variables is supported. This enables easy tracking of shape changes across neural network layers.
 
 ```python
+B, C, H, W = get_dim_vars('b c h w') #lookup pre-declared dim vars
 v: (B, C, H, W) = torch.randn(B, C, h, w)
 x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v) 
 ```
@@ -176,7 +179,7 @@ Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ..
 ```python
 from tsalib import agg_dims as agd
 b: (2, B, D)
-c: (2, D) = np.mean(b, axis=agd('2bd->d')) #axis = (0,1)
+c: (2, D) = np.mean(b, axis=agd(',,d->d')) #axis = (0,1)
 ```
 
 ### Sequence of shape transformations: `warp` operator

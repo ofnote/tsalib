@@ -68,7 +68,9 @@ class DimVar:
         return Symbol(sname) in DimVar.decls
     @staticmethod
     def lookup(sname):
-        return DimVar.decls[Symbol(sname)]
+        sn = Symbol(sname)
+        assert sn in DimVar.decls, f'DimVar {sn} not declared'
+        return DimVar.decls[sn]
 
     @staticmethod
     def eval(e):
@@ -195,8 +197,17 @@ def dim_vars(names, strict=True, cache=True):
     else: return tss
 
 def get_dim_vars(names):
-    names = list(names)
-    return [DimVar.lookup(name) for name in names]
+    '''
+    names: 'b c h w', separated by spaces
+    '''
+    names = names.split(' ')
+    res = [TS(DimVar.lookup(name)) for name in names]
+    if len(names) == 1: return res[0]
+    else: return res
+
+#def update_dim_var_size ():
+#avoid this function
+#maybe redeclare dim var?
 
 def declare_common_dim_vars ():
     B, V, D, Dh = dim_vars('Batch Vocab EmbedDim HiddenDim')
