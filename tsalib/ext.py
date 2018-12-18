@@ -107,7 +107,7 @@ def expand_transform (src, expansions, in_shape):
     res = resolve_to_int_tuple(res)
     return res
 
-def agg_dims (tfm):
+def reduce_dims (tfm):
     '''
     tfm: 'btd->b'
     '''
@@ -124,46 +124,60 @@ def agg_dims (tfm):
     return tuple(drops)
 
 
-def tfm_decompose (tfm_str, tfm_names):
+def tfm_decompose (tfms, tfm_names):
     '''
     Decompose a multi-step transform into basic (view, permute, expand) transforms
-    tfm_str  'btd -> b,t,2,d//2 -> b,2,t,d//2'
+    tfms  'btd -> b,t,2,d//2 -> b,2,t,d//2'
     tfm_names 'vp' [first view, then permute transform]
     '''
-    assert isinstance(tfm_str, str)
     tfm_symbols = list(tfm_names) # ['v', 't']
     tfm_symbols_no_c = list(tfm_names.replace('c',''))
+    tfm_list = [] # (trf symbol, trf_lhs, trf_rhs)
 
-    shapes = [t.strip() for t in tfm_str.split('->')]
-    assert len(shapes) >= 2, "Specify at least one transform, e.g., btd->dtb"
-    assert len(tfm_symbols_no_c) == (len(shapes) - 1), "Num of transform descriptions and symbols do not match"
+    if isinstance(tfms, str):
 
-    shapes = [_to_tuple(s) for s in shapes]
+        shapes = [t.strip() for t in tfms.split('->')]
+        assert len(shapes) >= 2, "Specify at least one transform, e.g., btd->dtb"
+        assert len(tfm_symbols_no_c) == (len(shapes) - 1), "Num of transform descriptions and symbols do not match"
 
-    tfm_list = []
-    
-    #for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
-    #    tfm_list.append((tfm_symbols[i], l, r) )
+        shapes = [_to_tuple(s) for s in shapes]
+        #for i, (l, r) in enumerate(zip(shapes[:-1], shapes[1:])):
+        #    tfm_list.append((tfm_symbols[i], l, r) )
 
-    curr_shape_pos = 0 #count current tfm's position (handle implicit contiguous)
-    for sym in tfm_symbols:
-        #contiguous transform
-        if sym == 'c': 
-            tfm_list.append((sym, None, None))
-        else:
-            l, r = shapes[curr_shape_pos: curr_shape_pos+2]
-            tfm_list.append((sym, l, r))
-            curr_shape_pos += 1
+        curr_shape_pos = 0 #count current tfm's position (handle implicit contiguous)
+        for sym in tfm_symbols:
+            #contiguous transform
+            if sym == 'c': 
+                tfm_list.append((sym, None, None))
+            else:
+                l, r = shapes[curr_shape_pos: curr_shape_pos+2]
+                tfm_list.append((sym, l, r))
+                curr_shape_pos += 1
+
+    elif isinstance(tfms, list):
+        assert len(tfms) == len(tfm_symbols_no_c), "Num transformations {0} != transform symbols {1}".format(len(tfms),len(tfm_symbols_no_c))
+        assert len(tfms) > 0, "No transformations given. Specify at least one transformation"
+        curr_pos = 0 #count current tfm's position (handle implicit contiguous)
+        for sym in tfm_symbols:
+            if sym == 'c':   #contiguous transform
+                tfm_list.append((sym, None, None))
+            else:
+                l, r = [t.strip() for t in tfms[curr_pos].split('->')]
+                tfm_list.append((sym, l, r))
+                curr_pos += 1
+
+    else:
+        assert False, "warp: wrong format for transforms. Specify either a string or a list."
 
     return tfm_list
 
 
 from .backend import get_backend_by_name, get_backend_for_tensor
 
-def warp (x, tfm_str, tfm_names, backend=None, debug=False):
+def warp (x, tfms, tfm_names, backend=None, debug=False):
     '''
     Perform a multi-step transform on the tensor x
-    tfm_str  'btd -> b,t,2,d//2 -> b,2,t,d//2 -> b,2,t,^n,d//2'
+    tfms  'btd -> b,t,2,d//2 -> b,2,t,d//2 -> b,2,t,^n,d//2'
     tfm_names 'vp' [first (v)iew, then (p)ermute transform]
     backend    either a string('numpy', 'tf', 'torch') or the corresponding backend.<class>
     '''
@@ -172,7 +186,7 @@ def warp (x, tfm_str, tfm_names, backend=None, debug=False):
     else:
         be = get_backend_for_tensor(x)
 
-    tfm_list = tfm_decompose(tfm_str, tfm_names)
+    tfm_list = tfm_decompose(tfms, tfm_names)
 
     #print (f'tfm list {tfm_list}')
 

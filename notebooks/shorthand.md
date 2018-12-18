@@ -19,9 +19,9 @@ In some cases, it is possible to use `b` and `c` directly in shape annotations (
 _ = permute_transform('bcd -> bdc')
 ```
 
-* If a TSA contains both names and expressions, use comma format: `b,t,c * d`
+* If a TSA contains both names and expressions, use comma format: `b,t,c * d`. In this format, a comma must follow each dimension (except the last one).
 
-* Skip dimensions irrelevant to a transformation by using *comma* or *_* placeholders: 
+* Skip dimensions irrelevant to a transformation by using placeholders (*comma* or *_*) : 
     - write 'bcd' as 'b,,d' or 'b_d'
     - ```permute_transform(',c,d -> ,d,c')```
 

@@ -4,8 +4,7 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
-`tsalib` API guide notebook is [here](notebooks/tsalib.ipynb).
-
+`tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 See Changelog [here](#change-log).
 
 ## Introduction
@@ -79,7 +78,7 @@ assert y.size() == (B*C,H,W)
 
 ## Documentation, Design Principles
 
-This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The shorthand notation documention is [here](notebooks/shorthand.md).
+This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The shorthand notation is documented [here](notebooks/shorthand.md).
 
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
@@ -94,7 +93,7 @@ The [models](models) directory contains tsalib annotations of a few well-known, 
 ## API
 
 ```python
-from tsalib import dim_vars as dvs
+from tsalib import dim_vars as dvs, get_dim_vars
 import numpy as np
 ```
 
@@ -178,9 +177,9 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
 ```python
-from tsalib import agg_dims as agd
+from tsalib import reduce_dims as rd
 b: (2, B, D)
-c: (2, D) = np.mean(b, axis=agd(',,d->d')) #axis = (0,1)
+c: (2, D) = np.mean(b, axis=rd(',,d->d')) #axis = (0,1)
 ```
 
 ### Sequence of shape transformations: `warp` operator
@@ -228,9 +227,9 @@ Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter]
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
-* [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier.
+* [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier. Shorthand notation docs.
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
-* [18 Nov 2018] Support for `warp`, `agg_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
+* [18 Nov 2018] Support for `warp`, `reduce_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
 * [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
 * [25 Oct 2018] Initial Release
