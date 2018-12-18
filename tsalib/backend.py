@@ -8,6 +8,8 @@ class ABackend:
     def view(self, x, shape): raise NotImplementedError
     def transpose(self, x, dims): raise NotImplementedError
     def expand(self, x, mul_shape): raise NotImplementedError
+    def stack(self, x, mul_shape): raise NotImplementedError
+    def concat(self, x, mul_shape): raise NotImplementedError
 
 
 class Numpy(ABackend):
@@ -23,17 +25,21 @@ class Numpy(ABackend):
         return x.reshape(shape)
     def transpose(self, x, dims): return x.transpose(dims)
     def expand(self, x, mul_shape): return x.tile(mul_shape)
-
+    def stack(self, xlist, axis): return self.np.stack(xlist, axis=axis)
+    def concat(self, xlist, axis): return self.np.concatenate(xlist, axis=axis)
 
 class PyTorch(ABackend):
     name = 'pytorch'
     def __init__(self):
         import torch
+        self.torch = torch
     def shape(self, x): return x.size()
     def contiguous(self, x): return x.contiguous()
     def view(self, x, shape): return x.view(shape)
     def transpose(self, x, dims): return x.permute(dims)
     def expand(self, x, mul_shape): return x.expand(mul_shape)
+    def stack(self, xlist, axis): return self.torch.stack(xlist, dim=axis)
+    def concat(self, xlist, axis): return self.torch.cat(xlist, dim=axis)
 
 
 class TF(ABackend):
@@ -52,6 +58,8 @@ class TF(ABackend):
     def view(self, x, shape): return self.tf.reshape(x, shape)
     def transpose(self, x, dims): return self.tf.transpose(x, dims)
     def expand(self, x, mul_shape): return self.tf.tile(x, mul_shape)
+    def stack(self, xlist, axis): return self.tf.stack(xlist, axis=axis)
+    def concat(self, xlist, axis): return self.tf.concat(xlist, axis=axis)
 
 
 becache  = {}

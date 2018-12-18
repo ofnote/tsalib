@@ -175,12 +175,6 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 ```
 
-Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
-```python
-from tsalib import reduce_dims as rd
-b: (2, B, D)
-c: (2, D) = np.mean(b, axis=rd(',,d->d')) #axis = (0,1)
-```
 
 ### Sequence of shape transformations: `warp` operator
 
@@ -195,6 +189,28 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 
 See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
+### And More ..
+
+**Stack/Concat**. Join sequence of tensors into a single tensor in different ways using the same `join` operator.
+```python
+    # xi : (B, T, D)
+    # concatenate along the 'T' dimension: "(b,t,d)* -> (b,3*t,d)"
+    x = tsalib.join([x1, x2, x3], ',*,') 
+    assert x.shape == (B, 3*T, D)
+
+    #stack: join by adding a new dimension to the front: "(b,t,d)* -> (^,b,t,d)"
+    x = join([x1, x2, x3], '^') 
+    assert x.shape == (3, B, T, D)
+
+```
+
+
+Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
+```python
+    from tsalib import reduce_dims as rd
+    b: (2, B, D)
+    c: (2, D) = np.mean(b, axis=rd(',,d->d')) #axis = (0,1)
+```
 
 ## Dependencies
 
@@ -222,11 +238,12 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 
 ## Contributors
 
-Nishant Sinha, OffNote Labs. @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
+Nishant Sinha, [OffNote Labs](http://offnote.co). @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
 
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
+* [18 Dec 2018] Added the `join` operator. `warp` takes a list of (shorthand) transformations.
 * [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier. Shorthand notation docs.
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
 * [18 Nov 2018] Support for `warp`, `reduce_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.

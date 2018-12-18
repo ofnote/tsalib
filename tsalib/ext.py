@@ -124,7 +124,33 @@ def reduce_dims (tfm):
     return tuple(drops)
 
 
-def tfm_decompose (tfms, tfm_names):
+from .backend import get_backend_by_name, get_backend_for_tensor
+
+def join (tlist, fmt, backend=None):
+    assert isinstance(tlist, list), "Can only group a list of tensors"
+    assert len(tlist) > 1, "Can only group more than one tensors"
+
+    if backend is not None:
+        be = get_backend_by_name(backend)
+    else:
+        be = get_backend_for_tensor(tlist[0])
+
+    if '->' in fmt: #l, r style transformation
+        raise NotImplementedError
+
+    out_shape = fmt.strip().split(',')
+    if '^' in out_shape:
+        pos = out_shape.index('^')
+        return be.stack(tlist, axis=pos)
+    else:
+        if '*' not in out_shape:
+            assert pos != '-1', 'Group specification does not contain "^" or "*"'
+
+        pos = out_shape.index('*')
+        return be.concat(tlist, axis=pos)
+
+
+def tfm_seq_decompose (tfms, tfm_names):
     '''
     Decompose a multi-step transform into basic (view, permute, expand) transforms
     tfms  'btd -> b,t,2,d//2 -> b,2,t,d//2'
@@ -172,7 +198,6 @@ def tfm_decompose (tfms, tfm_names):
     return tfm_list
 
 
-from .backend import get_backend_by_name, get_backend_for_tensor
 
 def warp (x, tfms, tfm_names, backend=None, debug=False):
     '''
@@ -186,7 +211,7 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
     else:
         be = get_backend_for_tensor(x)
 
-    tfm_list = tfm_decompose(tfms, tfm_names)
+    tfm_list = tfm_seq_decompose(tfms, tfm_names)
 
     #print (f'tfm list {tfm_list}')
 
