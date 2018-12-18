@@ -191,7 +191,7 @@ See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
 ### And More ..
 
-**Stack/Concat**. Join sequence of tensors into a single tensor in different ways using the same `join` operator.
+Unified `stack/concat` using `join`. Join sequence of tensors into a single tensor in different ways using the same `join` operator.
 ```python
     # xi : (B, T, D)
     # concatenate along the 'T' dimension: "(b,t,d)* -> (b,3*t,d)"
