@@ -209,7 +209,7 @@ Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ..
 ```python
     from tsalib import reduce_dims as rd
     b: (2, B, D)
-    c: (2, D) = np.mean(b, axis=rd(',,d->d')) #axis = (0,1)
+    c: (D,) = np.mean(b, axis=rd('2bd -> d')) #axis = (0,1)
 ```
 
 ## Dependencies
