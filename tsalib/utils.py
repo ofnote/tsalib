@@ -1,6 +1,6 @@
-from tsalib.ts import TS, DimVar, dummy_dvar
+from tsalib.ts import TS, DimVar, dummy_dvar, TupleSeq
 from sympy import sympify, Symbol
-
+import re
 
 def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
     '''
@@ -11,9 +11,12 @@ def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
         t = e
     else: 
         assert isinstance(e, str)
-        if e == '' or e =='_':
+        if e == '' or e =='_':  
             t = dummy_dvar(dummy_idx)
             dummy_idx += 1
+        elif e == '^':
+            #TODO: better way to handle '^' ?
+            t = TS(Symbol(e))
         else: 
             #TODO: strict: check if all dim vars in e are previously declared?
             t = TS(sympify(e))
@@ -36,22 +39,43 @@ def _sexprs_to_ts(exprs, strict=False):
     return tuple(res)
 
 
+seq_re = r'\((.+)\)\*'
+
 def _to_tuple (ss):
     '''
-    :ss is shape string, e.g., ('btd') or ('b,t,d*2')
+    :ss is shape string, e.g., 'btd' or 'b,t,d*2' or '(btd)*'
+    :returns the shape representation in tuple/TupleSeq form
     '''
     if isinstance(ss, (list, tuple)):
         for s in ss: assert isinstance(s, (TS,int))
         return tuple(ss)
-
+    elif isinstance(ss, TupleSeq):
+        return ss
     elif isinstance(ss, str):
+        #remove all whitespace characters
+        ss = re.sub(r'\s+', '', ss)
+
+        #check if shape corresponds to a sequence        
+        is_seq = False
+        m = re.search(seq_re, ss)
+        if m is not None:  # ss = '(b,t,d)*'
+            ss = m.groups()[0]  # ss = 'b,t,d'
+            #print (f'groups: {m.groups()}') 
+            is_seq = True
+
         if ',' in ss: exprs = ss.strip().split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
         else: exprs = list(ss)              # 'btd' -> ['b','t','d']
 
         exprs = _sexprs_to_ts(exprs)
         for e in exprs:
             assert isinstance(e, TS)
-        return tuple(exprs)
+
+        exprs = tuple(exprs)
+
+        if is_seq:
+            exprs = TupleSeq(exprs)
+
+        return exprs
 
     else:
         raise ValueError('Unknown type of ss')

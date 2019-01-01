@@ -31,11 +31,19 @@ In shape transformations of form `lhs -> rhs` where `lhs` and `rhs` are TSAs, sh
 
 Only *valid* shape transformations can be resolved. A shape transformation is *valid* if for all dimension variables `D` in  `rhs`: either `D` is contained in `lhs` or the size of `D` has been declared earlier.
 
+TSAs use a few special symbols:
+- `*` to denote a sequence of shapes, e.g., `(b,t,d)*` denotes a sequence of tensors, each with shape `(b,t,d)`.
+- '^' to denote a new (unnamed) dimension, e.g., `(b,t,^,d)` denotes a tensor with a new dimension at 3rd position. Used when expanding dimensions of tensors.
+
 
 ## Warp Transformation
 
 In the `warp` transformation, we can also specify shorthand names for shape transformations. The following shorthands are supported:
 - `v`  or `r` for view/reshape transformations
 - `p`  or `t` for permute/transpose transformations
+- `j` for join transformations (stack/concatenate)
 - `e` for expand transformation
 - `c` for contiguous transformation
+
+
+

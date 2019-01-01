@@ -23,9 +23,14 @@ def arith_op (op, s1, s2):
 
     return TS(se)
 
+class TupleSeq:
+    def __init__(self, s):
+        self.s = s
+    def item(self): return self.s
+
 class DimVar:
     decls = {} #caches all dim var declarations
-    parse_regexp = r'(\w+)(?:\((\w)\))?(?::(\d+))?' #Height(h)?(:300)?
+    parse_regexp = r'(\w+)(?:\((\w+)\))?(?::(\d+))?' #Height(h)?(:300)?
 
     def __init__ (self, decl, strict, cache):
         '''
@@ -200,10 +205,27 @@ def get_dim_vars(names):
     '''
     names: 'b c h w', separated by spaces
     '''
-    names = names.split(' ')
+    names = names.strip().split(' ')
     res = [TS(DimVar.lookup(name)) for name in names]
     if len(names) == 1: return res[0]
     else: return res
+
+def size_assert(x_size, sa, dims=None):
+    '''
+    x_size: integer tuple
+    sa: TSA
+    dims: None or Sequence[int], e.g., [0,1]
+    Check if size of tensor x matches TSA `sa` along `dims` axes
+    '''
+    if dims is not None:
+        assert isinstance(dims, (list, tuple))
+        x_size = [x_size[d] for d in dims]
+        sa = [sa[d] for d in dims]
+
+    if x_size != sa:
+        print(f'Size mismatch: size = {x_size}, expected: {sa}')
+        assert False
+
 
 #def update_dim_var_size ():
 #avoid this function

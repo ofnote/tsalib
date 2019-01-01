@@ -1,5 +1,5 @@
-from tsalib.ts import TS, dim_var, dummy_dvar
-from sympy import sympify
+from tsalib.ts import TS, dim_var, dummy_dvar, TupleSeq
+from sympy import sympify, Integer
 from .utils import _sexprs_to_ts, _to_tuple, check_int_tuple, resolve_to_int_tuple
 
 
@@ -7,10 +7,11 @@ from .utils import _sexprs_to_ts, _to_tuple, check_int_tuple, resolve_to_int_tup
 def _view_transform (src, to, in_shape):
     '''
     View Transform
+    src, to: Union[str, Tuple]
     :src is the current view of the tensor
     :to is the target view, may contain expressions over named dim variables
     :in_shape is the shape (list/tuple) of the source tensor 
-    :returns the new size of the tensor after view transformation
+    :returns the new size of the tensor after view transformation (backend independent)
     '''
     check_int_tuple(in_shape)
 
@@ -21,6 +22,8 @@ def _view_transform (src, to, in_shape):
     to = _to_tuple(to)
     #print (src, to)
     assert isinstance(in_shape, (list, tuple))
+    assert isinstance(src, tuple)
+    assert isinstance(to, tuple)
 
     #sub_map = [(d.e, Symbol(f'{i}')) for i, d in enumerate(src)]
     sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)]
@@ -32,7 +35,7 @@ def _view_transform (src, to, in_shape):
 def view_transform (tfm, in_shape):
     '''
     View transform
-    :tfm is the shorthand representation of the transform ('btd -> b,t*2,d//2')
+    :tfm:str is the shorthand representation of the transform ('btd -> b,t*2,d//2')
     '''
     l, r = tfm.split('->')
     return _view_transform(l.strip(), r.strip(), in_shape)
@@ -41,12 +44,16 @@ def view_transform (tfm, in_shape):
 def _permute_transform(src, to):
     '''
     Permute Transform
+    src, to: Union[str, Tuple]
+
     :src is the current dimension arrangement, list of named dim variables
     :to is the target dimension arragement, list of named dim variables
-    :returns the index tuple for the permutation
+    :returns the index tuple for the permutation (backend independent)
     '''
     src = _to_tuple(src)
     to = _to_tuple(to)
+    assert isinstance(src, tuple)
+    assert isinstance(to, tuple)
 
     assert len(src) == len(to), "Source and Target shapes for permutation are not same"
 
@@ -60,6 +67,7 @@ def _permute_transform(src, to):
 def permute_transform (tfm):
     '''
     Permute transform
+    :tfm: str
     :tfm is the shorthand representation of the transform (',t,d -> ,d,t')
     '''
     l, r = tfm.split('->')
@@ -109,11 +117,14 @@ def expand_transform (src, expansions, in_shape):
 
 def reduce_dims (tfm):
     '''
-    tfm: 'btd->b'
+    tfm: str, 'btd->b'
     '''
     src, to = tfm.split('->')
     src = _to_tuple(src.strip())
     to = _to_tuple(to.strip())
+
+    assert isinstance(src, tuple)
+    assert isinstance(to, tuple)
 
     drops = []
     #check src includes all dims in to
@@ -124,27 +135,80 @@ def reduce_dims (tfm):
     return tuple(drops)
 
 
+
+
+def _join_transform (tlist, src, to):
+    '''
+    src: Union[str, TupleSeq]
+    to: Union[str, tuple]
+    src: (b,c,d)* , to: '^, b, c, d'
+                  , to: 'b, 3*c, d'
+    returns the dims shorthand for joining (backend independent)
+
+    '''
+    lhs = _to_tuple(src) #TupleSeq(B, C, D)
+    rhs = _to_tuple(to) 
+
+    assert isinstance(lhs, TupleSeq)
+    assert isinstance(rhs, tuple)
+
+    lhs = lhs.item() # (b, c, d)
+    int1 = Integer(1) # substitute all dim shorthands by '1'
+
+    sub_map = [(d.exp, int1) for d in lhs]
+    dims = tuple([t.exp.subs(sub_map) for t in rhs]) # (^, 1, 1, 1)
+
+
+    if len(rhs) == len(lhs): #concat, join by '*'
+        #join_dims = (1,3*1,1)
+        dims = ','.join(map(lambda x: '' if x == int1 else '*', dims))
+        #dims = ',*,'
+    elif len(rhs) == (len(lhs) + 1): #stack, join by '^'
+        dims = ','.join(map(lambda x: '' if x == int1 else '^', dims))
+        #dims = '^,,,'
+    else:
+        raise ValueError(f'Unable to join from {src} to {to}')
+
+    return dims
+
+
+def join_transform (tlist, tfm):
+    '''
+    Join transform
+    :tlist: List[tensor]
+    :tfm:str represents the transform "(b,c,d)* -> ^,b,c,d"
+    returns the dims shorthand for joining (backend independent)
+
+    '''
+    l, r = tfm.split('->')
+    return _join_transform(tlist, l.strip(), r.strip())
+
+
+
 from .backend import get_backend_by_name, get_backend_for_tensor
 
-def join (tlist, fmt, backend=None):
-    assert isinstance(tlist, list), "Can only group a list of tensors"
-    assert len(tlist) > 1, "Can only group more than one tensors"
+def join (tlist, dims, backend=None):
+    '''
+    tlist: List[tensor], list of tensors
+    dims: str = '..,^,...' or '..,*,...' 
+    '''
+    assert isinstance(tlist, list), "Can only group a list of tensors."
+    assert len(tlist) > 1, "Can only group more than one tensors."
 
     if backend is not None:
         be = get_backend_by_name(backend)
     else:
         be = get_backend_for_tensor(tlist[0])
 
-    if '->' in fmt: #l, r style transformation
-        raise NotImplementedError
+    if len(dims) > 1: assert ',' in dims, 'Separate dimensions by "," here.'
 
-    out_shape = fmt.strip().split(',')
+    out_shape = dims.strip().split(',')
     if '^' in out_shape:
         pos = out_shape.index('^')
         return be.stack(tlist, axis=pos)
     else:
         if '*' not in out_shape:
-            assert pos != '-1', 'Group specification does not contain "^" or "*"'
+            assert pos != '-1', 'Group specification does not contain "^" or "*".'
 
         pos = out_shape.index('*')
         return be.concat(tlist, axis=pos)
@@ -154,7 +218,7 @@ def tfm_seq_decompose (tfms, tfm_names):
     '''
     Decompose a multi-step transform into basic (view, permute, expand) transforms
     tfms  'btd -> b,t,2,d//2 -> b,2,t,d//2'
-    tfm_names 'vp' [first view, then permute transform]
+    tfm_names 'vp' , i.e., view, then permute transform
     '''
     tfm_symbols = list(tfm_names) # ['v', 't']
     tfm_symbols_no_c = list(tfm_names.replace('c',''))
@@ -230,6 +294,9 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
             ret = be.expand(ret, expand_shape)
         elif sym == 'c': 
             ret = be.contiguous(ret)
+        elif sym == 'j':
+            dims = _join_transform(ret, l, r)
+            ret = join(ret, dims, backend=be)
         else:
             assert False, f'Invalid transform symbol {sym}'
         if debug:

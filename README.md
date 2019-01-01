@@ -191,14 +191,14 @@ See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
 ### And More ..
 
-Unified `stack/concat` using `join`. Join sequence of tensors into a single tensor in different ways using the same `join` operator.
+Unified `stack/concat` using `join`. Join together sequence of tensors into a single tensor in different ways using the same `join` operator. `join` is also backend-dependent.
 ```python
     # xi : (B, T, D)
-    # concatenate along the 'T' dimension: "(b,t,d)* -> (b,3*t,d)"
+    # "concatenate" along the 'T' dimension: "(b,t,d)* -> (b,3*t,d)"
     x = tsalib.join([x1, x2, x3], ',*,') 
     assert x.shape == (B, 3*T, D)
 
-    #stack: join by adding a new dimension to the front: "(b,t,d)* -> (^,b,t,d)"
+    # "stack": join by adding a new dimension to the front: "(b,t,d)* -> (^,b,t,d)"
     x = join([x1, x2, x3], '^') 
     assert x.shape == (3, B, T, D)
 
@@ -224,6 +224,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 ## Best Practices
 
 * Convert all *relevant* config parameters into dimension variables. Use only the latter in your code.
+* Define all dimension variables upfront. Use `get_dim_vars` to lookup pre-defined dimension variables in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
 
 
