@@ -226,7 +226,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 ## Best Practices
 
 * Convert all *relevant* config parameters into dimension variables. Use only the latter in your code.
-* Define all dimension variables upfront. Use `get_dim_vars` to lookup pre-defined dimension variables in any function context.
+* Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
 
 
@@ -238,6 +238,9 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 * Using [einsum](http://ajcr.net/Basic-guide-to-einsum/) for tensor operations improves productivity and code readability. [blog](https://rockt.github.io/2018/04/30/einsum)
 * The [Tile](https://vertexai-plaidml.readthedocs-hosted.com/en/latest/writing_tile_code.html) DSL uses indices ranging over dimension variables to write compact, library-independent tensor operations.
 * The [datashape](https://datashape.readthedocs.io/en/latest/) library introduces a generic type system and grammar for structure data. `tsalib` focuses on shapes of homogeneous tensor data types only, with arithmetic support.
+* The [xarray](https://github.com/pydata/xarray) library.
+* The [einops](https://github.com/arogozhnikov/einops) library.
+* The [namedtensor](http://nlp.seas.harvard.edu/NamedTensor) library.
 
 ## Contributors
 
