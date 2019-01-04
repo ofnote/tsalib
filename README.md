@@ -52,6 +52,8 @@ x: (B, C, H // 2, W // 2) = maxpool(x)
 # check symbolic assertions over TSAs
 # assertions don't change even if dim sizes change
 assert x.size() == (B, C, H // 2, W // 2)
+#or, check selected dimensions
+size_assert (x.size(), (B,C,H//2,W//2), dims=[1,2])
 
 # super convenient reshapes!
 x1 = x.view ((B,C, (H//2)*(W//2)))
@@ -78,7 +80,7 @@ assert y.size() == (B*C,H,W)
 
 ## Documentation, Design Principles
 
-This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The shorthand notation is documented [here](notebooks/shorthand.md).
+This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The **shorthand** notation is documented [here](notebooks/shorthand.md).
 
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
@@ -178,7 +180,7 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 ### Sequence of shape transformations: `warp` operator
 
-The `warp` operator allows squeezing in multiple shape transformations in a single line using the shorthand notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
+The `warp` operator allows squeezing in multiple shape transformations in a single line using the **shorthand** notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
