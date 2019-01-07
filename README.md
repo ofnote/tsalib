@@ -12,7 +12,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 - [Introduction](#Introduction) 
 - [Dimension Variables, Quick Start](#Dimension-Variables)
 - [Installation](#Installation) 
-- [Documentation, Design, Model Examples](#Documentation--Design-Principles--Model-Examples)
+- [Documentation, Design Principles, Model Examples](#Documentation--Design-Principles--Model-Examples)
 - [API Overview](#API)
 - [Best Practices for using `tsalib`](#Best-Practices)
 - [Change Log](#change-log)
@@ -234,7 +234,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 
 ## Best Practices
 
-* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start with declaring dimension variables, labeling statements with TSAs and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Then, move on to using the advanced features of tsalib: shorthand shape transformations, warp, join, etc.
+* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start off only with declaring dimension variables, labeling statements with TSAs and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Once comfortable, move on to using the advanced features of tsalib: shorthand shape transformations, warp, join, etc.
 * Convert all *relevant* config parameters into dimension variables. Use only latter in your code.
 * Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
