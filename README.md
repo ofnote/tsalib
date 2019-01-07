@@ -12,7 +12,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 - [Introduction](#Introduction) 
 - [Dimension Variables, Quick Start](#Dimension-Variables)
 - [Installation](#Installation) 
-- [Documentation, Design Principles, Model Examples](#Documentation--Design-Principles--Model-Examples)
+- [Documentation, Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
 - [API Overview](#API)
 - [Best Practices for using `tsalib`](#Best-Practices)
 - [Change Log](#change-log)
@@ -94,7 +94,7 @@ This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for th
 
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
-- Avoid deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
+- We've carefully avoided deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
 
 
 The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
