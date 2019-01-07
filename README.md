@@ -4,8 +4,18 @@ Writing deep learning programs which manipulate multi-dimensional tensors (`nump
 These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
-`tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
-See Changelog [here](#change-log).
+
+The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
+
+## Contents
+
+- [Introduction](#Introduction) 
+- [Dimension Variables, Quick Start](#Dimension-Variables)
+- [Installation](#Installation) 
+- [Documentation, Design, Model Examples](#Documentation--Design-Principles--Model-Examples)
+- [API Overview](#API)
+- [Best Practices for using `tsalib`](#Best-Practices)
+- [Change Log](#change-log)
 
 ## Introduction
 
@@ -78,7 +88,7 @@ assert y.size() == (B*C,H,W)
 
 `pip install [--upgrade] tsalib`
 
-## Documentation, Design Principles
+## Documentation, Design Principles, Model Examples
 
 This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The **shorthand** notation is documented [here](notebooks/shorthand.md).
 
@@ -86,7 +96,6 @@ This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for th
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
 - Avoid deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
 
-## Model Examples
 
 The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
@@ -225,7 +234,8 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 
 ## Best Practices
 
-* Convert all *relevant* config parameters into dimension variables. Use only the latter in your code.
+* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start with declaring dimension variables, labeling statements with TSAs and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Then, move on to using the advanced features of tsalib: shorthand shape transformations, warp, join, etc.
+* Convert all *relevant* config parameters into dimension variables. Use only latter in your code.
 * Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
 
