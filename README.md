@@ -18,31 +18,31 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 - [Change Log](#change-log)
 
 
-<details>
-<summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. More ..
-</summary>
+    <details>
+    <summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. More ..
+    </summary>
 
-For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
+    For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
-`tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
+    `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
 
-- as first-class annotations of tensor variables,
-- to write `symbolic` shape `assert`ions and tensor constructors
-- to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
-</details>
+    - as first-class annotations of tensor variables,
+    - to write `symbolic` shape `assert`ions and tensor constructors
+    - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
+    </details>
 
-<details>
-<summary>
-Shape annotations/assertions turn out to be useful in many ways:
-</summary>
+    <details>
+    <summary>
+    Shape annotations/assertions turn out to be useful in many ways: (More ..)
+    </summary>
 
-* Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
-* Assertions and annotations remain the same even if the actual dimension sizes change.
-* Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
-* Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
-* Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
-* They serve as useful documentation to help others understand or extend your module.
-</details>
+    * Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
+    * Assertions and annotations remain the same even if the actual dimension sizes change.
+    * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
+    * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
+    * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
+    * They serve as useful documentation to help others understand or extend your module.
+    </details>
 
 
 ## Dimension Variables
