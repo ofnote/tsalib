@@ -12,16 +12,21 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 - [Introduction](#Introduction) 
 - [Dimension Variables, Quick Start](#Dimension-Variables)
 - [Installation](#Installation) 
-- [Documentation, Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
+- [Shorthand Notation, Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
 - [API Overview](#API)
-- [Best Practices for using `tsalib`](#Best-Practices)
+- [Best Practices -- How to use `tsalib`](#Best-Practices)
 - [Change Log](#change-log)
 
-## Introduction
+
+<details>
+<summary> <b>Background</b>
+
 
  Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
 `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
+</summary>
+
 - as first-class annotations of tensor variables,
 - to write `symbolic` shape `assert`ions and tensor constructors
 - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
@@ -35,6 +40,7 @@ Shape annotations/assertions turn out to be useful in many ways.
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 * They serve as useful documentation to help others understand or extend your module.
 
+</details>
 
 
 ## Dimension Variables
@@ -50,7 +56,7 @@ Here is an example snippet which uses TSAs in a `pytorch` program to define, tra
 
 ```python
 from tsalib import dim_vars as dvs
-from tsalib import permute_transform as pt
+from tsalib import view_transform as vt, permute_transform as pt
 
 #declare dimension variables
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
@@ -69,18 +75,27 @@ size_assert (x.size(), (B,C,H//2,W//2), dims=[1,2])
 x1 = x.view ((B,C, (H//2)*(W//2)))
 assert x1.size() == (B, C, (H//2)*(W//2))
 
-# permute using shorthand notation,
-# with anonymous dimensions
+```
+
+Use tensor shorthand notation ([TSN]((notebooks/shorthand.md))) to write intuitive and quick shape changes.
+
+```python
+# reshape using shorthand (comma-separated)
+x1 = x.view (vt(',,p,q -> ,,p*q', x.size()) )
+
+# permute: irrelevant dimensions are underscores.
 x: (B, C, H, W)
-x1 = x.permute(pt(',c,,', ',,,c'))
+x1 = x.permute(pt('_c__ -> ___c'))
 assert x1.size() == (B, H, W, C)
 
-# A powerful one-stop `warp` operator
-# specify a composition of multiple transformations inline
+# Writing multiple shape transforms one-by-one gets cumbersome
+# A powerful one-stop `warp` operator to compose multiple transforms inline
+
 # here: a sequence of a permute ('p') and view ('v') transformations
 y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
 assert y.size() == (B*C,H,W)
-
+#or, with anonymous dims
+y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
 ``` 
 

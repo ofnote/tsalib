@@ -41,6 +41,25 @@ def _sexprs_to_ts(exprs, strict=False):
 
 seq_re = r'\((.+)\)\*'
 
+def _to_str_list(ss: str):
+    # 'btd' -> ['b','t','d']
+
+    #remove all whitespace characters
+    ss = re.sub(r'\s+', '', ss)
+
+    #check if shape corresponds to a sequence        
+    is_seq = False
+    m = re.search(seq_re, ss)
+    if m is not None:  # ss = '(b,t,d)*'
+        ss = m.groups()[0]  # ss = 'b,t,d'
+        #print (f'groups: {m.groups()}') 
+        is_seq = True
+
+    if ',' in ss: exprs = ss.strip().split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
+    else: exprs = list(ss)  
+
+    return exprs, is_seq 
+
 def _to_tuple (ss):
     '''
     :ss is shape string, e.g., 'btd' or 'b,t,d*2' or '(btd)*'
@@ -52,20 +71,7 @@ def _to_tuple (ss):
     elif isinstance(ss, TupleSeq):
         return ss
     elif isinstance(ss, str):
-        #remove all whitespace characters
-        ss = re.sub(r'\s+', '', ss)
-
-        #check if shape corresponds to a sequence        
-        is_seq = False
-        m = re.search(seq_re, ss)
-        if m is not None:  # ss = '(b,t,d)*'
-            ss = m.groups()[0]  # ss = 'b,t,d'
-            #print (f'groups: {m.groups()}') 
-            is_seq = True
-
-        if ',' in ss: exprs = ss.strip().split(',') #'b,t,d*2' -> ['b', 't', 'd*2']
-        else: exprs = list(ss)              # 'btd' -> ['b','t','d']
-
+        exprs, is_seq = _to_str_list(ss)  # 'btd' -> 'b', 't', 'd'
         exprs = _sexprs_to_ts(exprs)
         for e in exprs:
             assert isinstance(e, TS)
@@ -128,3 +134,25 @@ def to_shape (src):
     returns: (B, T, H*D)
     '''
     return NotImplemented
+
+def get(x, dv_dict, x_tsa):
+    '''
+    Index using dimension shorthands
+    
+    x: arbitrary tensor (can be indexed in numpy notation : x[:,0,:])
+    dv_dict: {'b': 0, 'c': 5} 
+    x_tsa: 'b,c,d'
+    '''
+    shape, is_seq = _to_str_list(x_tsa)
+    assert not is_seq, f"get from shape {x_tsa} not implemented"
+
+    colon = slice(None)
+    slice_tuple = []
+    for sh in shape:
+        if sh in dv_dict:
+            slice_tuple.append(dv_dict[sh])
+        else:
+            slice_tuple.append(colon)
+
+    y = x[slice_tuple]
+    return y

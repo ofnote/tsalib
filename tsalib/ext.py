@@ -1,6 +1,11 @@
 from tsalib.ts import TS, dim_var, dummy_dvar, TupleSeq
 from sympy import sympify, Integer
-from .utils import _sexprs_to_ts, _to_tuple, check_int_tuple, resolve_to_int_tuple
+from .utils import _sexprs_to_ts, _to_str_list, _to_tuple, check_int_tuple, resolve_to_int_tuple
+
+
+
+
+
 
 
 
@@ -187,6 +192,18 @@ def join_transform (tlist, tfm):
 
 from .backend import get_backend_by_name, get_backend_for_tensor
 
+def get_backend(backend, x):
+    if backend is not None:
+        be = get_backend_by_name(backend)
+    else:
+        be = get_backend_for_tensor(x)
+
+    return be
+
+
+
+
+
 def join (tlist, dims, backend=None):
     '''
     tlist: List[tensor], list of tensors
@@ -195,10 +212,7 @@ def join (tlist, dims, backend=None):
     assert isinstance(tlist, list), "Can only group a list of tensors."
     assert len(tlist) > 1, "Can only group more than one tensors."
 
-    if backend is not None:
-        be = get_backend_by_name(backend)
-    else:
-        be = get_backend_for_tensor(tlist[0])
+    be = get_backend(backend, tlist[0])
 
     if len(dims) > 1: assert ',' in dims, 'Separate dimensions by "," here.'
 
@@ -270,13 +284,9 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
     tfm_names 'vp' [first (v)iew, then (p)ermute transform]
     backend    either a string('numpy', 'tf', 'torch') or the corresponding backend.<class>
     '''
-    if backend is not None:
-        be = get_backend_by_name(backend)
-    else:
-        be = get_backend_for_tensor(x)
 
+    be = get_backend(backend, x)
     tfm_list = tfm_seq_decompose(tfms, tfm_names)
-
     #print (f'tfm list {tfm_list}')
 
     ret = x

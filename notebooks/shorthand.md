@@ -1,4 +1,4 @@
-# Shorthand notation doc
+# Tensor Shorthand Notation (TSN)
 
 `tsalib` allows using shorthand names to refer to dimension/axes in shape transformation specifications. 
 

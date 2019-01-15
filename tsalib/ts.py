@@ -227,6 +227,7 @@ def size_assert(x_size, sa, dims=None):
         assert False
 
 
+
 #def update_dim_var_size ():
 #avoid this function
 #maybe redeclare dim var?
