@@ -1,6 +1,6 @@
 # Tensor Shape Annotations Library (tsalib)
 
-Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **symbolic** shapes over **dimension variables**.
+Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)). The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **symbolic** shapes over **dimension variables**.
 These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
 
 Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
@@ -29,16 +29,19 @@ For example, reshaping before a `matmult`, figuring out `RNN` output shapes, exa
 - as first-class annotations of tensor variables,
 - to write `symbolic` shape `assert`ions and tensor constructors
 - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
+</details>
 
+<details>
+<summary>
+Shape annotations/assertions turn out to be useful in many ways:
+</summary>
 
-Shape annotations/assertions turn out to be useful in many ways. 
 * Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
 * Assertions and annotations remain the same even if the actual dimension sizes change.
 * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
 * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
 * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
 * They serve as useful documentation to help others understand or extend your module.
-
 </details>
 
 
