@@ -19,13 +19,12 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 
 
 <details>
-<summary> <b>Background</b>
+<summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. More ..
+</summary>
 
-
- Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex, e.g., reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
+For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
 `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
-</summary>
 
 - as first-class annotations of tensor variables,
 - to write `symbolic` shape `assert`ions and tensor constructors
