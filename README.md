@@ -18,7 +18,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 - [Change Log](#change-log)
 
 
-    <details>
+<details>
     <summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. (more ..)
     </summary>
 
@@ -29,10 +29,10 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
     - as first-class annotations of tensor variables,
     - to write `symbolic` shape `assert`ions and tensor constructors
     - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
-    </details>
+</details>
 
 
-    <details>
+<details>
     <summary>
     Shape annotations/assertions turn out to be useful in many ways: (More ..)
     </summary>
@@ -43,7 +43,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
     * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
     * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
     * They serve as useful documentation to help others understand or extend your module.
-    </details>
+</details>
 
 
 ## Dimension Variables
@@ -179,7 +179,8 @@ Avoid explicit shape computations for `reshaping`.
     x = x.view(B, T, 4, D//4)
 ```
 
-In general, use `tsalib.view_transform` to specify view changes declaratively.
+<details>
+<summary>In general, use `tsalib.view_transform` to specify view changes declaratively. </summary>
 
 ```python
     x = np.ones((B, T, D))
@@ -190,8 +191,10 @@ In general, use `tsalib.view_transform` to specify view changes declaratively.
     #or, super-compact, using anonymous dimensions:
     y = x.reshape(vt(',,d -> ,,4,d//4', x.shape))
 ```
+</details>
 
-Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec.
+Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec. <details><summary>More..</summary>
+
 ```python 
     from tsalib import permute_transform as pt
 
@@ -204,6 +207,8 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
     y = x.transpose(pt('b,,d, -> d,,b,'))
 
 ```
+</details>
+
 
 
 ### Sequence of shape transformations: `warp` operator
@@ -223,6 +228,7 @@ See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 <details>
     <summary>More ..</summary>
 Unified `stack/concat` using `join`. Join together sequence of tensors into a single tensor in different ways using the same `join` operator. `join` is also backend-dependent.
+
 ```python
     # xi : (B, T, D)
     # "concatenate" along the 'T' dimension: "(b,t,d)* -> (b,3*t,d)"
@@ -245,8 +251,6 @@ Align one tensor to the rank of another tensor using `alignto`.
     assert x1_aligned.shape == (1,D,1,D)
 ```
 
-</details>
-
 
 Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
 ```python
@@ -254,6 +258,10 @@ Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ..
     b: (2, B, D)
     c: (D,) = np.mean(b, axis=rd('2bd -> d')) #axis = (0,1)
 ```
+
+</details>
+
+
 
 ## Dependencies
 
@@ -270,6 +278,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 * Convert all *relevant* config parameters into dimension variables. Use only latter in your code.
 * Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
+* Shape *Annotations* vs *Assertions*. Shape annotations (`x: (B,T,D)`) ease shape recall during coding. Shape assertions (`assert x.shape === (B,T,D)`) enable catching inadvertent shape bugs at runtime. Pick either or both to work with.
 
 
 ## References
