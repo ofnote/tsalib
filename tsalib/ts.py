@@ -3,8 +3,8 @@ from sympy import Symbol, nan, simplify
 import re
 
 def arith_op (op, s1, s2):
-    assert isinstance(s1, TS)
-    s2 = TS(s2)
+    assert isinstance(s1, DimExpr)
+    s2 = DimExpr(s2)
 
     s1e = s1.exp
     s2e = s2.exp
@@ -21,7 +21,7 @@ def arith_op (op, s1, s2):
     else:
         raise NotImplementedError(f'{op}')
 
-    return TS(se)
+    return DimExpr(se)
 
 class TupleSeq:
     def __init__(self, s):
@@ -89,9 +89,9 @@ class DimVar:
         sub_map = [(e, dv.name) for e, dv in DimVar.decls.items()]
         return str(e.subs(sub_map))
 
-class TS:
+class DimExpr:
     '''
-    The Tensor Shape Expression Class
+    Encapsulates the expression for a particular axis/dimension
     '''
     #DEFAULT_VALUE = 1
 
@@ -104,7 +104,7 @@ class TS:
             self._val = t
         elif isinstance(t, DimVar):
             self._e, self._val, self.is_dvar = t.exp, t.len, True
-        elif isinstance(t, TS):
+        elif isinstance(t, DimExpr):
             self._e, self._val, self.is_dvar = t._e, t._val, t.is_dvar
         else:
             #print (f'test expr: {v} {repr(type(v))}')
@@ -123,7 +123,7 @@ class TS:
         if self._val != nan:
             return int(self._val)
         else: 
-            #return TS.DEFAULT_VALUE
+            #return DimExpr.DEFAULT_VALUE
             raise ValueError(f'Cannot cast to integer: Default value of {self._e} not provided')
     def __index__(self): return self.__int__()
 
@@ -140,13 +140,15 @@ class TS:
     def __rtruediv__(self, n): return self.__truediv__(n)
 
     def __eq__(self, d):
-        #print (f'eq: {self._val}, {d}')
+        #print (f'eq: {self}, {d}')
         if isinstance(d, int):
             #semantics: any integer matches nan
             if self._val == nan: return True 
             else: return self._val == d
-        elif isinstance(d, TS):
-            return self._e == d._e 
+        elif isinstance(d, DimExpr):
+            res = self._e == d._e 
+            #print (res)
+            return res
         else:
             return False   
 
@@ -165,7 +167,7 @@ def dim_var (name, strict=True, cache=True):
     Declare a single dimension variable
     '''
     d = DimVar(name, strict=strict, cache=cache)
-    return TS(d)
+    return DimExpr(d)
 
 def dummy_dvar(pos):
     '''
@@ -177,7 +179,7 @@ def dummy_dvar(pos):
     #print (f'dummy {d}')
     return d
 
-def dim_vars_shape(names, shape, strict=True):
+def dim_vars_from_shape(names, shape, strict=True):
     '''
     Declare dim vars corresponding to dimensions of tensor
     :names 'b t d'
@@ -206,26 +208,9 @@ def get_dim_vars(names):
     names: 'b c h w', separated by spaces
     '''
     names = names.strip().split(' ')
-    res = [TS(DimVar.lookup(name)) for name in names]
+    res = [DimExpr(DimVar.lookup(name)) for name in names]
     if len(names) == 1: return res[0]
     else: return res
-
-def size_assert(x_size, sa, dims=None):
-    '''
-    x_size: integer tuple
-    sa: TSA
-    dims: None or Sequence[int], e.g., [0,1]
-    Check if size of tensor x matches TSA `sa` along `dims` axes
-    '''
-    if dims is not None:
-        assert isinstance(dims, (list, tuple))
-        x_size = [x_size[d] for d in dims]
-        sa = [sa[d] for d in dims]
-
-    if x_size != sa:
-        print(f'Size mismatch: size = {x_size}, expected: {sa}')
-        assert False
-
 
 
 #def update_dim_var_size ():

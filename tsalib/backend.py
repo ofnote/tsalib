@@ -1,4 +1,4 @@
-from .utils import to_int_tuple
+from .tsn import to_int_tuple
 
 class ABackend:
     name = None

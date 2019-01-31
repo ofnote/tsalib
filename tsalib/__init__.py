@@ -4,7 +4,9 @@ name = "tsalib"
 #if sys.version_info < (3, 6, 1):
 #    raise RuntimeError("TSAlib requires Python 3.6.1 or later")
 
-from tsalib.ts import dim_var, dim_vars, get_dim_vars, size_assert
-from tsalib.utils import get
-from tsalib.ext import view_transform, permute_transform, expand_transform, reduce_dims
-from tsalib.ext import warp, join, join_transform
+from .ts import dim_var, dim_vars, get_dim_vars
+from .tsn import tsn_to_shape
+from .utils import get, reduce_dims, size_assert
+from .transforms import view_transform, permute_transform, expand_transform, join_transform
+from .transforms import alignto
+from .tensor_ops import warp, join

@@ -219,8 +219,9 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 
 See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
-### And More ..
-
+### `join`, `alignto`, `reduce_dims` ...
+<details>
+    <summary>More ..</summary>
 Unified `stack/concat` using `join`. Join together sequence of tensors into a single tensor in different ways using the same `join` operator. `join` is also backend-dependent.
 ```python
     # xi : (B, T, D)
@@ -233,6 +234,18 @@ Unified `stack/concat` using `join`. Join together sequence of tensors into a si
     assert x.shape == (3, B, T, D)
 
 ```
+
+Align one tensor to the rank of another tensor using `alignto`.
+
+```python
+    x1 = np.random.randn(D,D)
+    x2 = np.random.randn(B,D,T,D)
+
+    x1_aligned = alignto( (x1, 'dd'), (x2, 'bdtd') )
+    assert x1_aligned.shape == (1,D,1,D)
+```
+
+</details>
 
 
 Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ...) operations.
@@ -278,6 +291,7 @@ Nishant Sinha, [OffNote Labs](http://offnote.co). @[medium](https://medium.com/@
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
+* [31 Jan 2019] Added `alignto` operator.
 * [18 Dec 2018] Added the `join` operator. `warp` takes a list of (shorthand) transformations.
 * [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier. Shorthand notation docs.
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
