@@ -146,8 +146,9 @@ def _join_transform (tlist, src, to):
     '''
     src: Union[str, TupleSeq]
     to: Union[str, tuple]
-    src: (b,c,d)* , to: '^, b, c, d'
-                  , to: 'b, 3*c, d'
+    src: (b,c,d)* , to: '^, b, c, d'    OR
+    src: (b,c,d)* , to: 'b, 3*c, d'
+
     returns the dims shorthand for joining (backend independent)
 
     '''
@@ -189,8 +190,67 @@ def join_transform (tlist, tfm):
     return _join_transform(tlist, l.strip(), r.strip())
 
 
+def align_transform (src, to):
+    '''
+    src: 'd,d'
+    to: '6, d, t, d'
+    return: '^,,^,' [expansion shorthand for src]
+    '''
+
+    lhs = _to_tuple(src) #TupleSeq(B, C, D)
+    rhs = _to_tuple(to) 
+
+    assert isinstance(lhs, tuple)
+    assert isinstance(rhs, tuple)
+
+    lhs_pos, rhs_pos = 0
+    res = []
+    for rhs_pos, d in enumerate(rhs):
+        if lhs[lhs_pos] == d: 
+            res.append('')
+            lhs_pos += 1
+        else:
+            res.append('^')
+
+    if lhs_pos != len(lhs):
+        print (f'Unable to align {src} to {to}: {src} not a subsequence of {to}')
+        raise ValueError
+
+    return ','.join(res)
+
+
+def expand(x, tfm):
+    '''
+    x: (backend) tensor, e.g., shape 'd,d'
+    tfm: expand tsn: '^,,^,'
+    returns tensor of shape '1,d,1,d'
+    '''
+
+    colon = slice(None)
+    expand_tup = tuple(None if c == '^' else colon for c in tfm.split(','))
+    return x[expand_tup]
+
+
+def alignto(x, y):
+    '''
+    Align tensor x's shape to y's shape.
+    Assume x's shape is a subsequence of y's shape
+    Assume tensors x and y support numpy's "None, :"" indexing notation
+    x: (tensor_var, x_shape)
+    y: (tensor_var, y_shape)
+    '''
+
+    assert isinstance(x, tuple) and isinstance(y, tuple), 'Arguments are of form (tensor_var, shothand shape)'
+
+    xt, xs = x
+    yt, ys = y
+
+    expand_tfm = align_transform(xs, ys)
+    return expand(xt, expand_tfm)
+
 
 from .backend import get_backend_by_name, get_backend_for_tensor
+
 
 def get_backend(backend, x):
     if backend is not None:
@@ -199,8 +259,6 @@ def get_backend(backend, x):
         be = get_backend_for_tensor(x)
 
     return be
-
-
 
 
 

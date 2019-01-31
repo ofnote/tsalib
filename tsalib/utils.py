@@ -127,15 +127,16 @@ def resolve_to_int_tuple(s):
 def to_int_tuple(s):
     return tuple([int(d) for d in s])
 
-def to_shape (src):
+def tsn_to_shape (tsn):
     '''
-    src: 'b,t,h*d'
+    tsn: 'b,t,h*d'
     Lookup each shorthand in cache. 
     returns: (B, T, H*D)
     '''
-    return NotImplemented
+    assert isinstance(tsn, str)
+    return _to_tuple(tsn)
 
-def get(x, dv_dict, x_tsa):
+def get(x, dv_dict):
     '''
     Index using dimension shorthands
     
@@ -143,8 +144,12 @@ def get(x, dv_dict, x_tsa):
     dv_dict: {'b': 0, 'c': 5} 
     x_tsa: 'b,c,d'
     '''
-    shape, is_seq = _to_str_list(x_tsa)
-    assert not is_seq, f"get from shape {x_tsa} not implemented"
+
+    assert isinstance(tuple), 'The first argument should be a tuple of (vector, shape)'
+    xv, xs = x
+    shape, is_seq = _to_str_list(xs)
+    if not is_seq:
+        raise NotImplementedError(f"get from shape {xs} not implemented")
 
     colon = slice(None)
     slice_tuple = []

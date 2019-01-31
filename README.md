@@ -48,7 +48,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 
 ## Dimension Variables
 
-Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program.
+Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program. Even complex architectures need only a small number of named dimensions.
 
 TSAs may be represented as (shorthand doc [here](notebooks/shorthand.md))
 * a tuple `(B,H,D)` [long form]
@@ -80,7 +80,7 @@ assert x1.size() == (B, C, (H//2)*(W//2))
 
 ```
 
-Use tensor shorthand notation ([TSN]((notebooks/shorthand.md))) to write intuitive and quick shape changes.
+Use tensor shorthand notation ([TSN](notebooks/shorthand.md)) to write intuitive and quick shape changes.
 
 ```python
 # reshape using shorthand (comma-separated)
@@ -97,6 +97,7 @@ assert x1.size() == (B, H, W, C)
 # here: a sequence of a permute ('p') and view ('v') transformations
 y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
 assert y.size() == (B*C,H,W)
+
 #or, with anonymous dims
 y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
