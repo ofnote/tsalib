@@ -16,8 +16,7 @@ def test_decls():
     #local declarations
     print(f'B, C, D = {B}, {C}, {D}')
 
-    #strict=False allows overwriting previous declarations
-    H, W = dim_vars ('Height(h):256 Width(w):256', strict=False) 
+    H, W = dim_vars ('Height(h):256 Width(w):256', check=False) 
     print(f'H, W = {H}, {W}')
 
 

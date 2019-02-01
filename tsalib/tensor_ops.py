@@ -88,9 +88,11 @@ def tfm_seq_decompose (tfms, tfm_names):
 def warp (x, tfms, tfm_names, backend=None, debug=False):
     '''
     Perform a multi-step transform on the tensor x
-    tfms  'btd -> b,t,2,d//2 -> b,2,t,d//2 -> b,2,t,^n,d//2'
-    tfm_names 'vp' [first (v)iew, then (p)ermute transform]
-    backend    either a string('numpy', 'tf', 'torch') or the corresponding backend.<class>
+    x: tensor
+    tfms:  'btd -> b,t,2,d//2 -> b,2,t,d//2 -> b,2,t,^n,d//2'
+    tfm_names: 'vp' [first (v)iew, then (p)ermute transform]
+    backend:  either a string('numpy', 'tf', 'torch') or the corresponding backend.<class>
+    debug: prints per-step debugging information
     '''
 
     be = get_backend(backend, x)
@@ -118,5 +120,5 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
         else:
             assert False, f'Invalid transform symbol {sym}'
         if debug:
-            print (f'after transform shape is: {be.shape(ret)}')
+            print (f'   after transform shape is: {be.shape(ret)}')
     return ret

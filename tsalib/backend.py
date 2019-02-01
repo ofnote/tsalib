@@ -79,7 +79,7 @@ def get_backend_for_tensor(x):
     elif 'torch.' in t: ret = from_cache(PyTorch)
     elif 'tensorflow.' in t: ret = from_cache(TF)
     else: 
-        raise NotImplementedError(f'Unable to handle tensor of type {t}.')
+        raise NotImplementedError(f'Unsupported tensor type {t}. Contributions welcome.')
 
     return ret
 

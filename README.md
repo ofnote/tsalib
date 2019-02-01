@@ -1,31 +1,33 @@
 # Tensor Shape Annotations Library (tsalib)
 
-Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)). The Tensor Shape Annotation (TSA) library enables you to write first-class, library-independent, **symbolic** shapes over **dimension variables**.
-These symbolic annotations enable us to write defensive *shape assertions* as well as write more *fluent* shape *transformations* and tensor *operations*. Using TSAs enhances code clarity, accelerates debugging. TSAs expose the typically *invisible* tensor dimension names, leading to improved productivity across the board. 
+Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)). 
 
-Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
+The `tsalib` library enables you to write 
+- first-class, library-independent, shape annotations (TSAs) over **named dimension variables**,
+- defensive *shape assertions* using these named shapes, and,
+- more *fluent* shape *transformations* and tensor *operations* using tensor shorthand notation (**TSN**).
+
+TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
 The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 
+Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
+
 ## Contents
 
-- [Introduction](#Introduction) 
-- [Dimension Variables, Quick Start](#Dimension-Variables)
+- [Quick Start -- Dimension Variables, Tensor Shorthand Notation](#Dimension-Variables)
 - [Installation](#Installation) 
-- [Shorthand Notation, Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
+- [Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
 - [API Overview](#API)
 - [Best Practices -- How to use `tsalib`](#Best-Practices)
 - [Change Log](#change-log)
 
 
 <details>
-    <summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. (more ..)
+    <summary> <b>Background:</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. ...
     </summary>
-
     For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). There is no principled way of shape specification and tracking inside code -- most developers resort to writing adhoc comments embedded in code to keep track of tensor shapes (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
-
     `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
-
     - as first-class annotations of tensor variables,
     - to write `symbolic` shape `assert`ions and tensor constructors
     - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
@@ -34,9 +36,8 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 
 <details>
     <summary>
-    Shape annotations/assertions turn out to be useful in many ways: (More ..)
+    Developers benefit from shape annotations/assertions in many ways: (more ..)
     </summary>
-
     * Quickly verify the variable shapes when writing new transformations or modifying existing modules. 
     * Assertions and annotations remain the same even if the actual dimension sizes change.
     * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
@@ -50,10 +51,12 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
 
 Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B` (Batch), `C` (Channels), `D` (EmbedDim) -- and arithmetic expressions (`B*2`, `C+D`) over them. Using `tsalib`, you can define dimension variables customized to your architecture/program. Even complex architectures need only a small number of named dimensions.
 
-TSAs may be represented as (shorthand doc [here](notebooks/shorthand.md))
+TSAs may be represented as tuples or *shorthand* strings:
 * a tuple `(B,H,D)` [long form]
-* a string `'b,h,d'` (shorthand shape notation) (or simply `'bhd'`)
+* a string `'b,h,d'` (or simply `'bhd'`)
 * a string with anonymous dimensions (`',h,'` is a 3-d tensor).
+
+The tensor shorthand notation (**TSN**), documented [here](notebooks/shorthand.md)), is used extensively in tsalib.
 
 Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
@@ -65,17 +68,19 @@ from tsalib import view_transform as vt, permute_transform as pt
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
 ...
 # create tensors using dimension variables (interpret dim vars as integers)
-x: (B, C, H, W) = torch.randn(B, C, H, W) 
+x: (B, C, H, W) = torch.randn( (B, C, H, W) )
+
 # perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
+
 # check symbolic assertions over TSAs
 # assertions don't change even if dim sizes change
 assert x.size() == (B, C, H // 2, W // 2)
 #or, check selected dimensions
 size_assert (x.size(), (B,C,H//2,W//2), dims=[1,2])
 
-# super convenient reshapes!
-x1 = x.view ((B,C, (H//2)*(W//2)))
+# super convenient reshapes (long form)!
+x1 = x.view ((B, C, (H//2)*(W//2)))
 assert x1.size() == (B, C, (H//2)*(W//2))
 
 ```
@@ -83,10 +88,8 @@ assert x1.size() == (B, C, (H//2)*(W//2))
 Use tensor shorthand notation ([TSN](notebooks/shorthand.md)) to write intuitive and quick shape changes.
 
 ```python
-# reshape using shorthand (comma-separated)
-x1 = x.view (vt(',,p,q -> ,,p*q', x.size()) )
 
-# permute: irrelevant dimensions are underscores.
+# permute: irrelevant dimensions are anonymous (underscores).
 x: (B, C, H, W)
 x1 = x.permute(pt('_c__ -> ___c'))
 assert x1.size() == (B, H, W, C)
@@ -193,7 +196,8 @@ Avoid explicit shape computations for `reshaping`.
 ```
 </details>
 
-Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec. <details><summary>More..</summary>
+<details>
+<summary>Similarly, use `tsalib.permute_transform` to compute permutation index order (no manual guess-n-check) from a declarative spec. </summary>
 
 ```python 
     from tsalib import permute_transform as pt
@@ -213,7 +217,7 @@ Similarly, use `tsalib.permute_transform` to compute permutation index order (no
 
 ### Sequence of shape transformations: `warp` operator
 
-The `warp` operator allows squeezing in multiple shape transformations in a single line using the **shorthand** notation. The operator takes in 3 inputs, an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
+The `warp` operator allows squeezing in multiple shape transformations in a single line using the tensor **shorthand** notation ([TSN]((notebooks/shorthand.md)). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
@@ -226,7 +230,7 @@ See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
 ### `join`, `alignto`, `reduce_dims` ...
 <details>
-    <summary>More ..</summary>
+    <summary>more ..</summary>
 Unified `stack/concat` using `join`. Join together sequence of tensors into a single tensor in different ways using the same `join` operator. `join` is also backend-dependent.
 
 ```python
@@ -293,9 +297,9 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 * The [einops](https://github.com/arogozhnikov/einops) library.
 * The [namedtensor](http://nlp.seas.harvard.edu/NamedTensor) library.
 
-## Contributors
+## Author
 
-Nishant Sinha, [OffNote Labs](http://offnote.co). @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs)
+ * Nishant Sinha, [OffNote Labs](http://offnote.co) (nishant@offnote.co, @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs))
 
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
