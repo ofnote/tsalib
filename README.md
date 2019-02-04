@@ -119,7 +119,7 @@ This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for th
 - We've carefully avoided deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
 
 
-The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
+The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py), [BERT](models/bert). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 
 
@@ -254,10 +254,10 @@ Align one tensor to the rank of another tensor using `alignto`.
     x1 = np.random.randn(D,D)
     x2 = np.random.randn(B,D,T,D)
 
-    x1_aligned = alignto((x1, 'dd'), (x2, 'bdtd'))
-    assert x1_aligned.shape == (B,D,T,D)
-    x1_aligned = alignto((x1, 'dd'), (x2, 'bdtd'), expand=False)
+    x1_aligned = alignto((x1, 'dd'), 'bdtd')
     assert x1_aligned.shape == (1,D,1,D)
+    x1_aligned = alignto((x1, 'dd'), 'bdtd', expand=True)
+    assert x1_aligned.shape == (B,D,T,D)
 ```
 
 
