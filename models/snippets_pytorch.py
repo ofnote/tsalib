@@ -116,7 +116,7 @@ def tsa_attn(Y, ht, rt1):
     (bM, br, w), (WY, Wh, Wr, Wt) = make_params(D)
 
     tmp: 'bd' = dot(ht, Wh, '_d.d_') + dot(rt1, Wr, '_d.d_')
-    tmp: 'bld' = alignto((tmp,'bd'), (Y,'bld'), expand=True)
+    tmp: 'bld' = alignto((tmp,'bd'), 'bld', expand=True)
 
     Mt: 'bld' = torch.tanh(dot(Y, WY, '__d.d_') + tmpa + bM)
     at: 'bl' = F.softmax(dot(Mt, w, '__d.d'), dim=-1)
@@ -125,7 +125,7 @@ def tsa_attn(Y, ht, rt1):
     return rt, at
 
 def test_tsa_attn():
-    B, L, D = dvs('Batch(b):3, sequence_length(l):5 hidden_dimension(d):7', check=False)
+    B, L, D = dvs('Batch(b):3, sequence_length(l):5 hidden_dimension(d):7', exists_ok=True)
 
     Y = random_tensors([B, L, D])
     ht, rt1 = random_tensors([B, D], num=2)

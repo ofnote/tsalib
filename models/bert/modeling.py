@@ -40,7 +40,7 @@ class BertConfig(object):
                vocab_size: 'v',
                hidden_size: 'd'=768,
                num_hidden_layers: 'l'=12,
-               num_attention_heads: 'h'=12,
+               num_attention_heads: 'n'=12,
                intermediate_size: 's'=3072,
                hidden_act="gelu",
                hidden_dropout_prob=0.1,
@@ -72,7 +72,7 @@ class BertConfig(object):
       initializer_range: The stdev of the truncated_normal_initializer for
         initializing all weight matrices.
     """
-    #B, T, V, H, Nl, IS, P, Vt = get_dim_vars('b t v h l s p vt')
+    #B, T, V, N, Nl, IS, P, Vt = get_dim_vars('b t v n l s p vt')
 
 
     #tmp add
@@ -80,14 +80,14 @@ class BertConfig(object):
 
     B, T = dim_vars(f'batch_size(b):{batch_size} seq_length(t):{seq_length}', exists_ok=True)
     V, D = dim_vars(f'vocab_size(v):{vocab_size} hidden_size(d):{hidden_size}', exists_ok=True)
-    Nl, H =  dim_vars(f'num_hidden_layers(l):{num_hidden_layers} num_attention_heads(h):{num_attention_heads}', exists_ok=True)
+    Nl, N =  dim_vars(f'num_hidden_layers(l):{num_hidden_layers} num_attention_heads(n):{num_attention_heads}', exists_ok=True)
     IS, P, Vt = dim_vars(f'intermediate_size(s):{intermediate_size} max_position_embeddings(p):{max_position_embeddings} type_vocab_size(vt):{type_vocab_size}', exists_ok=True)
-
+    H = dim_vars(f'size_per_head(h):{hidden_size // num_attention_heads}', exists_ok=True)
 
     self.vocab_size: V = vocab_size
-    self.hidden_size: H = hidden_size
+    self.hidden_size: D = hidden_size
     self.num_hidden_layers: Nl = num_hidden_layers
-    self.num_attention_heads: H = num_attention_heads
+    self.num_attention_heads: N = num_attention_heads
     self.hidden_act = hidden_act
     self.intermediate_size: IS = intermediate_size
     self.hidden_dropout_prob = hidden_dropout_prob
@@ -180,7 +180,7 @@ class BertModel(object):
     #input_shape = get_shape_list(input_ids, expected_rank=2)
     #batch_size = input_shape[0]
     #seq_length = input_shape[1]
-    B, T, D, H = get_dim_vars('b t d h')
+    B, T, D, N = get_dim_vars('b t d n')
 
     if input_mask is None:
       input_mask = tf.ones(shape=[B, T], dtype=tf.int32)
@@ -450,7 +450,7 @@ def embedding_lookup(input_ids,
 
   #input_shape: 'bti' = get_shape_list(input_ids)
 
-  output: 'btd' = warp(output, tfms=f'b*t*{i},d -> b,t,d*{i}', tfm_names='r', debug=False)
+  output: 'btd' = warp(output, tfms=f'b*t*{i},d -> b,t,d*{i}', tfm_names='r')
   
   return (output, embedding_table)
 
@@ -602,9 +602,9 @@ def create_attention_mask_from_input_mask(from_tensor: 'b,f,...', to_mask: 'b,t'
 
     return mask
 
-def attention_layer(from_tensor: 'b,t1,d1',
-                    to_tensor: 'b,t2,d2',
-                    attention_mask=None,
+def attention_layer(from_tensor: 'b*t,d',
+                    to_tensor: 'b*t,d',
+                    attention_mask: 'b,t,t'=None,
                     num_attention_heads=1,
                     size_per_head=512,
                     query_act=None,
@@ -673,17 +673,15 @@ def attention_layer(from_tensor: 'b,t1,d1',
     ValueError: Any of the arguments or tensor shapes are invalid.
   """
 
-  def transpose_for_scores(input_tensor, batch_size, num_attention_heads,
-                           seq_length, width):
-    output_tensor = tf.reshape(
-        input_tensor, [batch_size, seq_length, num_attention_heads, width])
-
-    output_tensor = tf.transpose(output_tensor, [0, 2, 1, 3])
-    return output_tensor
+  def transpose_for_scores(input_tensor: 'b*t,d', batch_size: 'b', num_attention_heads: 'n', 
+                            seq_length: 't', width: 'd'):
+    #print (f'tran for sc: {get_shape_list(input_tensor)}')
+    #nah = num_attention_heads
+    return warp(input_tensor, [f'b*t,d -> btnh', '_tn_ -> _nt_'], 'vp')
 
   from_shape = get_shape_list(from_tensor, expected_rank=[2, 3])
   to_shape = get_shape_list(to_tensor, expected_rank=[2, 3])
-
+  
   if len(from_shape) != len(to_shape):
     raise ValueError(
         "The rank of `from_tensor` must match the rank of `to_tensor`.")
@@ -706,57 +704,52 @@ def attention_layer(from_tensor: 'b,t1,d1',
   #   N = `num_attention_heads`
   #   H = `size_per_head`
 
-  from_tensor_2d = reshape_to_matrix(from_tensor)
-  to_tensor_2d = reshape_to_matrix(to_tensor)
+  from_tensor_2d: 'b*t,d' = reshape_to_matrix(from_tensor)
+  to_tensor_2d: 'b*t,d' = reshape_to_matrix(to_tensor)
 
-  # `query_layer` = [B*F, N*H]
-  query_layer = tf.layers.dense(
+  query_layer: 'b*t,d' = tf.layers.dense(
       from_tensor_2d,
       num_attention_heads * size_per_head,
       activation=query_act,
       name="query",
       kernel_initializer=create_initializer(initializer_range))
 
-  # `key_layer` = [B*T, N*H]
-  key_layer = tf.layers.dense(
+  key_layer: 'b*t,d' = tf.layers.dense(
       to_tensor_2d,
       num_attention_heads * size_per_head,
       activation=key_act,
       name="key",
       kernel_initializer=create_initializer(initializer_range))
 
-  # `value_layer` = [B*T, N*H]
-  value_layer = tf.layers.dense(
+  value_layer: 'b*t,d' = tf.layers.dense(
       to_tensor_2d,
       num_attention_heads * size_per_head,
       activation=value_act,
       name="value",
       kernel_initializer=create_initializer(initializer_range))
 
-  # `query_layer` = [B, N, F, H]
-  query_layer = transpose_for_scores(query_layer, batch_size,
+  query_layer: 'b,n,t,h' = transpose_for_scores(query_layer, batch_size,
                                      num_attention_heads, from_seq_length,
                                      size_per_head)
 
-  # `key_layer` = [B, N, T, H]
-  key_layer = transpose_for_scores(key_layer, batch_size, num_attention_heads,
+  key_layer: 'b,n,t,h' = transpose_for_scores(key_layer, batch_size, num_attention_heads,
                                    to_seq_length, size_per_head)
 
   # Take the dot product between "query" and "key" to get the raw
   # attention scores.
-  # `attention_scores` = [B, N, F, T]
-  attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True)
-  attention_scores = tf.multiply(attention_scores,
+  attention_scores: 'bntt' = tf.matmul(query_layer, key_layer, transpose_b=True)
+  attention_scores: 'bntt' = tf.multiply(attention_scores,
                                  1.0 / math.sqrt(float(size_per_head)))
 
   if attention_mask is not None:
     # `attention_mask` = [B, 1, F, T]
-    attention_mask = tf.expand_dims(attention_mask, axis=[1])
+    #attention_mask = tf.expand_dims(attention_mask, axis=[1])
+    attention_mask = alignto((attention_mask,'btt'), 'bntt')
 
     # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
     # masked positions, this operation will create a tensor which is 0.0 for
     # positions we want to attend and -10000.0 for masked positions.
-    adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0
+    adder: 'bntt' = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0
 
     # Since we are adding it to the raw scores before the softmax, this is
     # effectively the same as removing these entirely.
@@ -764,36 +757,23 @@ def attention_layer(from_tensor: 'b,t1,d1',
 
   # Normalize the attention scores to probabilities.
   # `attention_probs` = [B, N, F, T]
-  attention_probs = tf.nn.softmax(attention_scores)
+  attention_probs: 'bntt' = tf.nn.softmax(attention_scores)
 
   # This is actually dropping out entire tokens to attend to, which might
   # seem a bit unusual, but is taken from the original Transformer paper.
-  attention_probs = dropout(attention_probs, attention_probs_dropout_prob)
+  attention_probs: 'bntt' = dropout(attention_probs, attention_probs_dropout_prob)
 
-  # `value_layer` = [B, T, N, H]
-  value_layer = tf.reshape(
-      value_layer,
-      [batch_size, to_seq_length, num_attention_heads, size_per_head])
+  value_layer: 'bnth' = warp(value_layer, 'b*t,n*h -> btnh -> bnth', 'vp')
 
-  # `value_layer` = [B, N, T, H]
-  value_layer = tf.transpose(value_layer, [0, 2, 1, 3])
+  context_layer: 'bnth' = tf.matmul(attention_probs, value_layer) #bntt,bnth->bnth OR ___t,__t_
 
-  # `context_layer` = [B, N, F, H]
-  context_layer = tf.matmul(attention_probs, value_layer)
-
-  # `context_layer` = [B, F, N, H]
-  context_layer = tf.transpose(context_layer, [0, 2, 1, 3])
+  #BUG: combining this with next warp makes tranpose_3 /perm tensors unreachable
+  context_layer = warp(context_layer, 'bnth->btnh', 'p')
 
   if do_return_2d_tensor:
-    # `context_layer` = [B*F, N*H]
-    context_layer = tf.reshape(
-        context_layer,
-        [batch_size * from_seq_length, num_attention_heads * size_per_head])
+      context_layer = warp(context_layer, 'btnh -> b*t,n*h', 'v') 
   else:
-    # `context_layer` = [B, F, N*H]
-    context_layer = tf.reshape(
-        context_layer,
-        [batch_size, from_seq_length, num_attention_heads * size_per_head])
+      context_layer = warp(context_layer, 'b,t,n*h', 'v')
 
   return context_layer
 
@@ -871,7 +851,7 @@ def transformer_model(input_tensor: 'btd',
   # the GPU/CPU but may not be free on the TPU, so we want to minimize them to
   # help the optimizer.
   #prev_output: 'b*t,d' = reshape_to_matrix(input_tensor)
-  prev_output: 'b*t,d' = warp(input_tensor, 'btd-> b*t,d', 'v')
+  prev_output: 'b*t,d' = warp(input_tensor, 'btd -> b*t,d', 'v')
   size_assert(get_shape_list(prev_output), (B*T,D))
 
   all_layer_outputs: '(btd)*' = []

@@ -13,11 +13,15 @@ def modeling_embedding_lookup(input_ids: 'bti'):
     output: 'btd' = tf.reshape(output,
                       input_shape[0:-1] + [input_shape[-1] * embedding_size])
 
-    #NEW
+    # NEW
     #no need for input_shape
     output: 'btd' = warp(output, tfms=f'b*t*{i},d -> b,t,d*{i}', tfm_names='r')
   
     #assert output.get_shape() == (B, T, D)
+
+
+
+####################
 
 
 def create_attention_mask_from_input_mask_old(from_tensor, to_mask):
@@ -68,3 +72,25 @@ def create_attention_mask_from_input_mask(from_tensor: 'b,f,...', to_mask: 'b,t'
     print (f'create attn: {get_shape_list(mask)}')
 
     return mask
+
+
+
+####################
+
+def transpose_for_scores_old(input_tensor, batch_size, num_attention_heads,
+                           seq_length, width):
+    print (f'tran for sc: {get_shape_list(input_tensor)}')
+
+    output_tensor = tf.reshape(
+        input_tensor, [batch_size, seq_length, num_attention_heads, width])
+
+    output_tensor = tf.transpose(output_tensor, [0, 2, 1, 3])
+    return output_tensor
+
+def transpose_for_scores(input_tensor: 'b*t,d', batch_size: 'b', num_attention_heads: 'n', 
+                            seq_length: 't', width: 'd'):
+    return warp(input_tensor, [f'b*t,d -> btnh', '_tn_ -> _nt_'], 'vp')
+
+####################
+
+
