@@ -1,6 +1,6 @@
 # Tensor Shape Annotations Library (tsalib)
 
-Writing deep learning programs which manipulate multi-dimensional tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of matrices/tensors. In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
+Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of tensors. In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 
 The `tsalib` library enables you to write 
 - first-class, library-independent, shape annotations (TSAs) over **named dimension variables**,
@@ -9,9 +9,7 @@ The `tsalib` library enables you to write
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
-The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb).
-
-Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
+The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb). Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 ## Contents
 
@@ -56,9 +54,9 @@ TSAs may be represented as tuples or *shorthand* strings:
 * a string `'b,h,d'` (or simply `'bhd'`)
 * a string with anonymous dimensions (`',h,'` is a 3-d tensor).
 
-The tensor shorthand notation (**TSN**), documented [here](notebooks/shorthand.md)), is used extensively in tsalib.
+The tensor shorthand notation ([TSN](notebooks/shorthand.md)), is used extensively in tsalib.
 
-Here is an example snippet which uses TSAs in a `pytorch` program to define, transform and verify tensor shapes. TSAs work seamlessly with arbitrary tensor libraries:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+Here is an example snippet which uses TSAs and TSNs in a `pytorch` program to define, transform and verify tensor shapes. `tsalib` is designed to work seamlessly with arbitrary backends:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
 ```python
 from tsalib import dim_vars as dvs
@@ -67,8 +65,10 @@ from tsalib import view_transform as vt, permute_transform as pt
 #declare dimension variables
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
 ...
-# create tensors using dimension variables (interpret dim vars as integers)
-x: (B, C, H, W) = torch.randn( (B, C, H, W) )
+# create tensors (pytorch) using dimension variables (interpret dim vars as integers)
+x: (B, C, H, W)=torch.randn( (B, C, H, W) )
+# or use shorthand labels
+x: 'bchw'=tf.get_variable("v", shape=(B, C, H, W), initializer=tf.random_normal_initializer())
 
 # perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
@@ -175,7 +175,7 @@ x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v)
 ```
 ### Shape and Tensor Transformations
 
-### Reshape, Permute/Transpose transformations 
+#### Reshape, Permute/Transpose transformations 
 
 Avoid explicit shape computations for `reshaping`. 
 ```python
@@ -217,9 +217,9 @@ Avoid explicit shape computations for `reshaping`.
 
 
 
-### One-stop shape transforms: `warp` operator
+#### One-stop shape transforms: `warp` operator
 
-The `warp` operator allows squeezing in a **sequence** of shape transformations in a single line using the tensor **shorthand** notation ([TSN](notebooks/shorthand.md)). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
+The `warp` operator allows squeezing in a **sequence** of shape transformations in a single line using [TSN](notebooks/shorthand.md). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
@@ -230,7 +230,7 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 
 See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
-### `join`, `alignto`, `reduce_dims` ...
+#### `join`, `alignto`, `reduce_dims` ...
 <details>
     <summary>more ..</summary>
 

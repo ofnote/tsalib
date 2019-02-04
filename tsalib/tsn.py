@@ -128,9 +128,6 @@ def resolve_to_int_tuple(s):
     return tuple(res)
 
 
-def to_int_tuple(s):
-    assert isinstance(s, tuple)
-    return tuple([int(d) for d in s])
 
 def tsn_to_shape (tsn):
     '''

@@ -1,13 +1,22 @@
 from .tsn import tsn_to_str_list, tsn_to_tuple
 
-def get(x, dv_dict):
+
+def int_shape(*s):
+    if len(s) == 1: 
+        assert isinstance(s, (tuple,list))
+        s = s[0]
+    else: s = tuple(s)
+    return tuple([int(d) for d in s])
+
+def select(x, dv_dict, squeeze=False):
     '''
     Index using dimension shorthands
     
-    x: arbitrary tensor (can be indexed in numpy notation : x[:,0,:])
+    x: (t, 'bcd') -- tensor, shape tuple (can be indexed in numpy notation : x[:,0,:])
     dv_dict: {'b': 0, 'c': 5} 
-    x_tsa: 'b,c,d'
+    squeeze: [True, False] or a tsn list ('b,c') of dims to be squeezed
     '''
+    assert not squeeze, 'not implemented'
 
     assert isinstance(tuple), 'The first argument should be a tuple of (vector, shape)'
     xv, xs = x
@@ -16,12 +25,10 @@ def get(x, dv_dict):
         raise NotImplementedError(f"get from shape {xs} not implemented")
 
     colon = slice(None)
-    slice_tuple = []
-    for sh in shape:
+    slice_tuple = [colon] * len(shape)
+    for pos, sh in shape:
         if sh in dv_dict:
-            slice_tuple.append(dv_dict[sh])
-        else:
-            slice_tuple.append(colon)
+            slice_tuple[pos] = dv_dict[sh]
 
     y = x[slice_tuple]
     return y
@@ -33,6 +40,7 @@ def size_assert(x_size, sa, dims=None):
     dims: None or Sequence[int], e.g., [0,1]
     Check if size of tensor x matches TSA `sa` along `dims` axes
     '''
+    x_size, sa = tuple(x_size), tuple(sa)
     if dims is not None:
         assert isinstance(dims, (list, tuple))
         x_size = [x_size[d] for d in dims]

@@ -104,7 +104,7 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
         if debug:
             print(f'*** processing transform.. {sym}\n {l} -> {r}')
         if sym == 'v' or sym == 'r': #view transform
-            new_shape = _view_transform(l, r, ret.shape)
+            new_shape = _view_transform(l, r, be.shape(ret))
             ret = be.view(x, new_shape)
         elif sym == 'p' or sym == 't':
             perm_indices = _permute_transform(l, r)

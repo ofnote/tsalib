@@ -32,10 +32,10 @@ class DimVar:
     decls = {} #caches all dim var declarations
     parse_regexp = r'(\w+)(?:\((\w+)\))?(?::(\d+))?' #Height(h)?(:300)?
 
-    def __init__ (self, decl, check, cache):
+    def __init__ (self, decl, exists_ok, cache):
         '''
         :decl: declaration string of variable ('Batch(b):20')
-        :check: check if declared earlier
+        :exists_ok: if declared earlier, nop
         :cache: store in `decls` cache
         '''
         assert isinstance(decl, str)
@@ -50,9 +50,9 @@ class DimVar:
         self._val = int(val) if val is not None else nan
         
         self._e = Symbol(self._sname)
-        if check and self._e in DimVar.decls:
+        if not exists_ok and self._e in DimVar.decls:
             prevd = DimVar.decls[self._e]
-            raise ValueError(f'DimVar {self._sname} already declared as {prevd._name}({self._e}). Use check=False to skip check.')
+            raise ValueError(f'DimVar {self._sname} already declared as {prevd._name}({self._e}). Use exists_ok=True to skip check.')
 
         if cache:       
             DimVar.decls[self._e] = self
@@ -75,6 +75,9 @@ class DimVar:
     @staticmethod
     def lookup(sname):
         sn = Symbol(sname)
+        #print (f'lookup: {sn} {len(DimVar.decls)}')
+        if len(DimVar.decls) == 0: 
+            assert False
         assert sn in DimVar.decls, f'DimVar {sn} not declared'
         return DimVar.decls[sn]
 
@@ -163,11 +166,11 @@ class DimExpr:
         return s
 
 
-def dim_var (name, check=False, cache=True):
+def dim_var (name, exists_ok=False, cache=True):
     '''
     Declare a single dimension variable
     '''
-    d = DimVar(name, check=check, cache=cache)
+    d = DimVar(name, exists_ok=exists_ok, cache=cache)
     return DimExpr(d)
 
 def dummy_dvar(pos):
@@ -176,11 +179,11 @@ def dummy_dvar(pos):
     '''
     assert pos >= 0
     name = f'_dm_{pos}'
-    d = dim_var(name, check=True, cache=False)
+    d = dim_var(name, exists_ok=True, cache=False)
     #print (f'dummy {d}')
     return d
 
-def dim_vars_from_shape(names, shape, check=False):
+def dim_vars_from_shape(names, shape, exists_ok=False):
     '''
     Declare dim vars corresponding to dimensions of tensor
     :names 'b t d'
@@ -189,17 +192,17 @@ def dim_vars_from_shape(names, shape, check=False):
     names = names.strip().split(' ')
     assert len(names) == len(shape), 'Number of Dimension Variables and Shape mismatch'
 
-    tss = [dim_var(f'{name}:{shape[i]}', check=check) for i, name in enumerate(names)]
+    tss = [dim_var(f'{name}:{shape[i]}', exists_ok=exists_ok) for i, name in enumerate(names)]
     if len(names) == 1: return tss[0]
     else: return tss
 
 
-def dim_vars(names, check=False, cache=True):
+def dim_vars(names, exists_ok=False, cache=True):
     '''
     Declare multiple dimension variables in one go
     '''
     names = names.strip().split(' ')
-    tss = [dim_var(name, check=check, cache=cache) for name in names]
+    tss = [dim_var(name, exists_ok=exists_ok, cache=cache) for name in names]
 
     if len(names) == 1: return tss[0]
     else: return tss

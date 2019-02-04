@@ -4,7 +4,7 @@ from .tsn import _sexprs_to_ts, tsn_to_str_list, tsn_to_tuple, check_int_tuple, 
 
 
 
-def _view_transform (src, to, in_shape):
+def _view_transform (src, to, in_shape, checkin=False):
     '''
     View Transform
     src, to: Union[str, Tuple]
@@ -13,7 +13,7 @@ def _view_transform (src, to, in_shape):
     :in_shape is the shape (list/tuple) of the source tensor 
     :returns the new size of the tensor after view transformation (backend independent)
     '''
-    check_int_tuple(in_shape)
+    if checkin: check_int_tuple(in_shape)
 
     src = tsn_to_tuple(src)
     if (len(src) != len(in_shape)):
@@ -73,47 +73,7 @@ def permute_transform (tfm):
     l, r = tfm.split('->')
     return _permute_transform(l.strip(), r.strip())
 
-def _expansions_as_dict(expansions):
-    if isinstance(expansions, list): #[(T, T*5), (D, D*4)]
-        res = expansions
-    else:
-        assert isinstance(expansions, str) #'k->k*5,t->t*10'
-        expansions = expansions.strip().split(',')
-        res = []
-        for ex in expansions:
-            t = _sexprs_to_ts(ex.strip().split('->'))
-            #print(t)
-            res.append(t)
-            #print (res)
 
-    exp_map = {l: r for (l, r) in res}
-    return exp_map
-
-
-def expand_transform (src, expansions, in_shape):
-    '''
-    :src        (B, T, D) = (10, 20, 300)
-    :expansions [(T, T*5), (D, D*4)]
-    :returns the expansion shape tuple
-    '''
-    src = tsn_to_tuple(src)
-    exp_map = _expansions_as_dict(expansions)
-    #exp_map = {_sexpr_to_ts(s)[0]: _sexpr_to_ts(t)[0] for (s, t) in (expansions)}
-    sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)] # (B, 10), (T, 20), (D, 300)
-
-    #print (expansions, exp_map)
-
-    res = []
-    for k in src:
-        if k not in exp_map: res.append(-1) #keep dim shape same
-        else:
-            v = exp_map[k]
-            assert isinstance(v, DimExpr)
-            res.append(v.exp.subs(sub_map)) #(T*5) -> 100, (D*4) -> 1200
-
-    res = tuple(res)
-    res = resolve_to_int_tuple(res)
-    return res
 
 
 
@@ -167,8 +127,8 @@ def join_transform (tlist, tfm):
 
 def align_transform (src, to):
     '''
-    src: 'd,d'
-    to: '6, d, t, d'
+    src: tsn 'd,d'
+    to: tsn '6, d, t, d'
     return: '^,,^,' [expansion shorthand for src]
     '''
 
@@ -197,35 +157,75 @@ def align_transform (src, to):
     return ','.join(res)
 
 
-def expand(x, tfm):
+
+def _expansions_as_dict(expansions):
+    if isinstance(expansions, list): #[(T, T*5), (D, D*4)]
+        res = expansions
+    else:
+        assert isinstance(expansions, str) #'k->k*5,t->t*10'
+        expansions = expansions.strip().split(',')
+        res = []
+        for ex in expansions:
+            t = _sexprs_to_ts(ex.strip().split('->'))
+            #print(t)
+            res.append(t)
+            #print (res)
+
+    exp_map = {l: r for (l, r) in res}
+    return exp_map
+
+
+def expand_transform (src, expansions, in_shape):
+    '''
+    :src        (B, T, D) = (10, 20, 300)
+    :expansions [(T, T*5), (D, D*4)]
+    :returns the expansion shape tuple
+    '''
+    src = tsn_to_tuple(src)
+    exp_map = _expansions_as_dict(expansions)
+    #exp_map = {_sexpr_to_ts(s)[0]: _sexpr_to_ts(t)[0] for (s, t) in (expansions)}
+    sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)] # (B, 10), (T, 20), (D, 300)
+
+    #print (expansions, exp_map)
+
+    res = []
+    for k in src:
+        if k not in exp_map: res.append(-1) #keep dim shape same
+        else:
+            v = exp_map[k]
+            assert isinstance(v, DimExpr)
+            res.append(v.exp.subs(sub_map)) #(T*5) -> 100, (D*4) -> 1200
+
+    res = tuple(res)
+    res = resolve_to_int_tuple(res)
+    return res
+
+def expand_transform2(x, tfm):
     '''
     x: (backend) tensor, e.g., shape 'd,d'
     tfm: expand tsn: '^,,^,'
     returns tensor of shape '1,d,1,d'
     '''
 
+    #print (f'expand: {tfm}')
     colon = slice(None)
     expand_tup = tuple(None if c == '^' else colon for c in tfm.split(','))
     return x[expand_tup]
 
 
-def alignto(x, y):
+def alignto(x, ys, expand=False):
     '''
     Align tensor x's shape to y's shape.
     Assume x's shape is a subsequence of y's shape
     Assume tensors x and y support numpy's "None, :"" indexing notation
     x: (tensor_var, x_shape)
-    y: (tensor_var, y_shape)
+    ys: y_shape (tsn of target tensor)
     '''
 
-    assert isinstance(x, tuple) and isinstance(y, tuple), 'Arguments are of form (tensor_var, shothand shape)'
-
+    assert isinstance(x, tuple), 'First argument is of form (tensor_var, tsn)'
     xt, xs = x
-    yt, ys = y
-
     expand_tfm = align_transform(xs, ys)
-    return expand(xt, expand_tfm)
-
+    return expand_transform2(xt, expand_tfm)
 
 
 
