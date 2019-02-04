@@ -57,7 +57,6 @@ class BertModelTest(tf.test.TestCase):
                  scope=None):
 
 
-      print ('init executed')
       self.parent = parent
       self.batch_size = batch_size
       self.seq_length = seq_length

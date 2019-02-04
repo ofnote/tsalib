@@ -309,6 +309,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
+* [4 Feb 2019] Added fully annotated and adapted BERT [model](models/bert). More illustrative pytorch and tensorflow snippets.
 * [31 Jan 2019] Added `alignto` operator.
 * [18 Dec 2018] Added the `join` operator. `warp` takes a list of (shorthand) transformations.
 * [28- Nov 2018] Added `get_dim_vars` to lookup dim vars declared earlier. Shorthand notation docs.

@@ -72,10 +72,6 @@ class BertConfig(object):
       initializer_range: The stdev of the truncated_normal_initializer for
         initializing all weight matrices.
     """
-    #B, T, V, N, Nl, IS, P, Vt = get_dim_vars('b t v n l s p vt')
-
-
-    #tmp add
     batch_size, seq_length = 13, 7
 
     B, T = dim_vars(f'batch_size(b):{batch_size} seq_length(t):{seq_length}', exists_ok=True)
