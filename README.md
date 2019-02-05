@@ -6,7 +6,7 @@ The `tsalib` library enables you to write
 - first-class, library-independent, shape annotations (TSAs) over **named dimension variables**,
 - defensive **shape assertions** using these named shapes, and,
 - more *fluent* shape **transformations** and tensor **operations** using tensor shorthand notation (**TSN**).
-- avoid memorizing a laundry list of APIs (`reshape`,`permute`,`stack`, `concat`) -- use the *one-stop* `warp` operator for shape transformations.
+- avoid memorizing a laundry list of APIs (`reshape`,`permute`,`stack`, `concat`) -- use the *one-stop* **warp** operator for shape transformations.
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
@@ -61,6 +61,8 @@ Here is an example snippet which uses TSAs and TSN to define, transform and veri
 
 ```python
 from tsalib import dim_vars as dvs, size_assert
+import tensorflow as tf
+import torch
 
 #declare dimension variables
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
@@ -93,7 +95,7 @@ Use TSN to write intuitive and crisp shape transformations.
 from tsalib import permute_transform as pt
 
 # permute: irrelevant dimensions are anonymous (underscores).
-x: (B, C, H, W)
+x: 'bchw'
 x1 = x.permute(pt('_c__ -> ___c'))
 assert x1.size() == (B, H, W, C)
 
@@ -105,7 +107,7 @@ assert y.size() == (B*C,H,W)
 #or, the same transformation sequence with anonymous dims
 y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
-# Combinations of `alignto` and `dot`
+# Combinations of `alignto`, `dot` and broadcast
 ht: 'bd'; Wh: 'dd'; Y: 'bld'; WY: 'dd'
 
 a: 'bd' = dot('_d.d_', ht, Wh) 
@@ -122,12 +124,15 @@ Mt: 'bld' = torch.tanh(dot('__d.d_', Y, WY) + b)
 
 This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The **shorthand** notation is documented [here](notebooks/shorthand.md).
 
+The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: 
+- [Resnet](models/resnet.py),
+- [OpenAI Transformer](models/openai_transformer.py),
+- [BERT](models/bert). 
+
+With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` (or equivalent) function.
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
 - We've carefully avoided deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
-
-
-The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: [Resnet](models/resnet.py), [OpenAI Transformer](models/openai_transformer.py), [BERT](models/bert). With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` function.
 
 
 
