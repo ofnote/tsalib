@@ -57,7 +57,7 @@ TSAs may be represented as tuples or *shorthand* strings:
 
 The tensor shorthand notation ([TSN](notebooks/shorthand.md)) is used extensively in tsalib.
 
-Here is an example snippet which uses TSAs and TSNs to define, transform and verify tensor shapes. `tsalib` is designed to work seamlessly with arbitrary backends:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+Here is an example snippet which uses TSAs and TSN to define, transform and verify tensor shapes. `tsalib` is designed to work seamlessly with arbitrary backends:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
 ```python
 from tsalib import dim_vars as dvs, size_assert
@@ -87,7 +87,7 @@ assert x1.size() == (B, C, (H//2)*(W//2))
 
 Note how TSAs are used as optional type annotations supported by Python >= 3.5. These annotations are optional and do not affect program performance.
 
-Use TSNs to write intuitive and crisp shape transformations.
+Use TSN to write intuitive and crisp shape transformations.
 
 ```python
 from tsalib import permute_transform as pt
@@ -284,7 +284,7 @@ Easy `matmult` specification when
     x = torch.randn(B, C, T)
     y = torch.randn(C, D)
     z = dot('_c_.c_', x, y)
-    assert z.shape == (B, T, D)
+    assert z.size() == (B, T, D)
 ```
 
 
@@ -299,11 +299,11 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 
 ## Best Practices
 
-* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start off only with declaring dimension variables, labeling statements with TSAs and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Once comfortable, move on to using the advanced features of tsalib: shorthand shape transformations, warp, join, etc.
+* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start off only with declaring dimension variables, labeling statements with TSAs and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Once comfortable, move on to using the advanced features of tsalib: shorthand shapes (TSN), warp, join, etc.
 * Convert all *relevant* config parameters into dimension variables. Use only latter in your code.
 * Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
-* Shape *Annotations* vs *Assertions*. Shape annotations (`x: (B,T,D)`) ease shape recall during coding. Shape assertions (`assert x.shape === (B,T,D)`) enable catching inadvertent shape bugs at runtime. Pick either or both to work with.
+* Shape *Annotations* vs *Assertions*. Shape labels (`x: (B,T,D)` or `x: 'btd'`) ease shape recall during coding. Shape assertions (`assert x.shape === (B,T,D)`) enable catching inadvertent shape bugs at runtime. Pick either or both to work with.
 
 
 ## References
