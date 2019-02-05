@@ -105,6 +105,13 @@ assert y.size() == (B*C,H,W)
 #or, the same transformation sequence with anonymous dims
 y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
+# Combinations of `alignto` and `dot`
+ht: 'bd'; Wh: 'dd'; Y: 'bld'; WY: 'dd'
+
+a: 'bd' = dot('_d.d_', ht, Wh) 
+b: 'b,1,d' = alignto((a,'bd'), 'bld')
+Mt: 'bld' = torch.tanh(dot('__d.d_', Y, WY) + b)
+
 ``` 
 
 ## Installation
