@@ -34,7 +34,7 @@ def merge_heads1(x: (B,H,T,D)):
 from tsalib import warp
 
 def merge_heads2(x: (B,H,T,D)):
-    res: (B,T,H*D) = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pv', debug=True)
+    res: (B,T,H*D) = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pv', debug=False)
     return res
 
 
@@ -104,7 +104,7 @@ def test_einsum_attn():
 
 
 '''
-With tsalib: 
+========= With tsalib =====
 '''
 
 def tsa_attn(Y, ht, rt1):
@@ -115,12 +115,12 @@ def tsa_attn(Y, ht, rt1):
     #WY, Wh, Wr, Wt: 'd,d' 
     (bM, br, w), (WY, Wh, Wr, Wt) = make_params(D)
 
-    tmp: 'bd' = dot(ht, Wh, '_d.d_') + dot(rt1, Wr, '_d.d_')
-    tmp: 'bld' = alignto((tmp,'bd'), 'bld', expand=True)
+    tmp: 'bd' = dot('_d.d_', ht, Wh) + dot('_d.d_', rt1, Wr)
+    tmpa: 'bld' = alignto((tmp,'bd'), 'bld')
 
-    Mt: 'bld' = torch.tanh(dot(Y, WY, '__d.d_') + tmpa + bM)
-    at: 'bl' = F.softmax(dot(Mt, w, '__d.d'), dim=-1)
-    rt: 'bd' = dot(Y, at, 'bld,bl->bd') + torch.tanh(dot(rt1, Wt, '_d.d_') + br)
+    Mt: 'bld' = torch.tanh(dot('__d.d_', Y, WY) + tmpa + bM)
+    at: 'bl' = F.softmax(dot('__d.d', Mt, w), dim=-1)
+    rt: 'bd' = dot('bld,bl->bd', Y, at) + torch.tanh(dot('_d.d_', rt1, Wt) + br)
 
     return rt, at
 
@@ -135,6 +135,6 @@ def test_tsa_attn():
     print ('tsa attn: assertions hold')
 
 if __name__ == '__main__':
-    #test_merge_heads()
+    test_merge_heads()
     #test_einsum_attn()
     test_tsa_attn()

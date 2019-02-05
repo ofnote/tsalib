@@ -702,8 +702,11 @@ def attention_layer(from_tensor: 'b*t,d',
   #   N = `num_attention_heads`
   #   H = `size_per_head`
 
-  from_tensor_2d: 'b*t,d' = reshape_to_matrix(from_tensor)
-  to_tensor_2d: 'b*t,d' = reshape_to_matrix(to_tensor)
+  #from_tensor_2d: 'b*t,d' = reshape_to_matrix(from_tensor)
+  #to_tensor_2d: 'b*t,d' = reshape_to_matrix(to_tensor)
+  
+  from_tensor_2d: 'b*t,d' = from_tensor
+  to_tensor_2d: 'b*t,d' = to_tensor
 
   query_layer: 'b*t,d' = tf.layers.dense(
       from_tensor_2d,
@@ -730,7 +733,7 @@ def attention_layer(from_tensor: 'b*t,d',
                                      num_attention_heads, from_seq_length,
                                      size_per_head)
 
-  key_layer: 'b,n,t,h' = transpose_for_scores(key_layer, batch_size, num_attention_heads,
+  key_layer: 'bnth' = transpose_for_scores(key_layer, batch_size, num_attention_heads,
                                    to_seq_length, size_per_head)
 
   # Take the dot product between "query" and "key" to get the raw
@@ -960,6 +963,7 @@ def get_shape_list(tensor, expected_rank=None, name=None):
   return shape
 
 
+'''
 def reshape_to_matrix(input_tensor: 'x,y,...,w') -> 'x*y*...,w':
   """Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix)."""
   ndims = input_tensor.shape.ndims
@@ -973,7 +977,6 @@ def reshape_to_matrix(input_tensor: 'x,y,...,w') -> 'x*y*...,w':
   output_tensor = tf.reshape(input_tensor, [-1, width])
   return output_tensor
 
-
 def reshape_from_matrix(output_tensor, orig_shape_list):
   """Reshapes a rank 2 tensor back to its original rank >= 2 tensor."""
   if len(orig_shape_list) == 2:
@@ -985,7 +988,7 @@ def reshape_from_matrix(output_tensor, orig_shape_list):
   width = output_shape[-1]
 
   return tf.reshape(output_tensor, orig_dims + [width])
-
+'''
 
 def assert_rank(tensor, expected_rank, name=None):
   """Raises an exception if the tensor rank is not of the expected rank.

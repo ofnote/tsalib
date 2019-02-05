@@ -1,6 +1,7 @@
-from .tsn import tsn_to_tuple
+from .tsn import tsn_to_tuple, tsn_to_str_list
 from .backend import get_backend_by_name, get_backend_for_tensor
-from .transforms import _view_transform, _permute_transform, _join_transform, expand_transform
+from .transforms import _view_transform, _permute_transform, _join_transform, _expand_transform
+from .utils import get_lowercase_symbols
 
 def get_backend(backend, x):
     if backend is not None:
@@ -109,9 +110,9 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
         elif sym == 'p' or sym == 't':
             perm_indices = _permute_transform(l, r)
             ret = be.transpose(ret, perm_indices)
-        elif sym == 'e':
-            expand_shape = expand_transform(l, r)
-            ret = be.expand(ret, expand_shape)
+        #elif sym == 'e':
+        #    expand_shape = _expand_transform(l, r)
+        #    ret = be.expand(ret, expand_shape)
         elif sym == 'c': 
             ret = be.contiguous(ret)
         elif sym == 'j':
@@ -122,3 +123,85 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
         if debug:
             print (f'   after transform shape is: {be.shape(ret)}')
     return ret
+
+
+
+def tsn_fill_dot_eqn (lhs, placeholders=['_','^','']):
+
+    '''
+    construct the full einsum equation for `dot` by adding new unicode symbols
+    lhs: ['_d', 'd__']
+    returns: lhs2 = ['ad', 'dbc'], rhs = 'abc'
+    '''
+    assert len(lhs) == 2
+    lhs = [tsn_to_str_list(l)[0] for l in lhs] # [['a', 'b', 'c'], ... ]
+
+    #sanity check
+    s1, s2 = set(lhs[0]), set(lhs[1])
+    common = list(s1.intersection(s2).difference(set(placeholders)))
+    assert len(common) == 1
+
+    chars = get_lowercase_symbols(len(s1)+len(s2)-1, common[0]) 
+
+    rhs = []
+    cnt = 0
+    lhs2 = []
+    for l in lhs:
+        r = []
+        for c in l: 
+            if c in placeholders:
+                o = chars[cnt]
+                rhs.append(o)
+                r.append(o)
+                cnt += 1
+            else: r.append(c)
+        r = ''.join(r)
+        lhs2.append(r)
+
+    return lhs2, ''.join(rhs), common[0]
+
+
+def dot (tfm, x, y, backend=None):
+    if '->' in tfm: #call einsum 
+        #raise NotImplementedError('todo: call einsum directly')
+        eqn = tfm.replace('.',',')
+    else:
+        if '.' not in tfm:
+            print ('To avoid confusion, please separate the shorthand shapes by ".", e.g., "_d.d__"')
+            if tfm.count(',') == 1:
+                tfm = tfm.replace(',','.')
+            else:
+                raise ValueError(f'Invalid dot transform spec {tfm}')
+        
+        lp, r = tfm.split('.')
+        lp, r, proj = tsn_fill_dot_eqn([lp, r])
+        eqn = ','.join(lp) + '->' + r
+
+    #print (f'eqn: {eqn}')
+    be = get_backend(backend, x)
+    return be.einsum(eqn, (x, y))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

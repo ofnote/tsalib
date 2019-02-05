@@ -6,6 +6,7 @@ The `tsalib` library enables you to write
 - first-class, library-independent, shape annotations (TSAs) over **named dimension variables**,
 - defensive **shape assertions** using these named shapes, and,
 - more *fluent* shape **transformations** and tensor **operations** using tensor shorthand notation (**TSN**).
+- avoid memorizing a laundry list of APIs (`reshape`,`permute`,`stack`, `concat`) -- use the *one-stop* `warp` operator for shape transformations.
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
@@ -28,7 +29,7 @@ The `tsalib` API **notebook** is [here](notebooks/tsalib.ipynb). Detailed articl
     `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
     - as first-class annotations of tensor variables,
     - to write `symbolic` shape `assert`ions and tensor constructors
-    - to specify shape transformations (`reshape`, `permute`, `expand`) succinctly. 
+    - to specify shape transformations (`warp`, `join`, `permute`) succinctly. 
 </details>
 
 
@@ -65,7 +66,7 @@ from tsalib import dim_vars as dvs, size_assert
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
 ...
 # create tensors (pytorch) using dimension variables (interpret dim vars as integers)
-x: (B, C, H, W)=torch.randn( (B, C, H, W) )
+x: (B, C, H, W)=torch.randn(B, C, H, W)
 # or use shorthand labels
 x: 'bchw'=tf.get_variable("x", shape=(B, C, H, W), initializer=tf.random_normal_initializer())
 
@@ -163,7 +164,7 @@ B, D = get_dim_vars('b d') #lookup pre-declared dim vars
 a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
 b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
 
-#or simply, use TSNs
+#or simply, use TSN strings as type labels
 a: 'b,d'
 b: '2bd'
 ```
@@ -173,14 +174,14 @@ Arithmetic over dimension variables is supported. This enables easy tracking of 
 
 ```python
 B, C, H, W = get_dim_vars('b c h w') #lookup pre-declared dim vars
-v: (B, C, H, W) = torch.randn(B, C, h, w)
-x : (B, C * 2, H//2, W//2) = torch.nn.conv2D(C, C*2, ...)(v) 
+v: 'bchw' = torch.randn(B, C, h, w)
+x : 'b,c*2,h//2,w//2' = torch.nn.conv2D(C, C*2, ...)(v) 
 ```
 ### Shape and Tensor Transformations
 
 #### Reshape, Permute/Transpose transformations 
 
-Avoid explicit shape computations for `reshaping`. 
+Avoid explicit shape computations for `reshaping`. The `*_transform` functions are backend-independent and work with arbitrary backends.
 ```python
     #use dimension variables directly
     x = torch.ones(B, T, D)
@@ -259,7 +260,7 @@ Align one tensor to the rank of another tensor using `alignto`.
 
     x1_aligned = alignto((x1, 'dd'), 'bdtd')
     assert x1_aligned.shape == (1,D,1,D)
-    x1_aligned = alignto((x1, 'dd'), 'bdtd', expand=True)
+    x1_aligned = alignto((x1, 'dd'), 'bdtd', tile=True)
     assert x1_aligned.shape == (B,D,T,D)
 ```
 
@@ -273,6 +274,18 @@ Use dimension names instead of cryptic indices in *reduction* (`mean`, `max`, ..
 
 </details>
 
+#### Simplified `dot` operator
+
+Easy `matmult` specification when 
+- exactly a single dimension is common between the operands and 
+- the order of dimensions preserved in the output.
+
+```python
+    x = torch.randn(B, C, T)
+    y = torch.randn(C, D)
+    z = dot('_c_.c_', x, y)
+    assert z.shape == (B, T, D)
+```
 
 
 ## Dependencies
@@ -312,6 +325,7 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 ## Change Log
 The library is in its early phases. Contributions/feedback welcome!
 
+* [5 Feb 2019] Added `dot` operator.
 * [4 Feb 2019] Added fully annotated and adapted BERT [model](models/bert). More illustrative pytorch and tensorflow snippets.
 * [31 Jan 2019] Added `alignto` operator.
 * [18 Dec 2018] Added the `join` operator. `warp` takes a list of (shorthand) transformations.

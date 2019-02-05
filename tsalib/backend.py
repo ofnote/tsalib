@@ -10,6 +10,7 @@ class ABackend:
     def expand(self, x, mul_shape): raise NotImplementedError
     def stack(self, x, mul_shape): raise NotImplementedError
     def concat(self, x, mul_shape): raise NotImplementedError
+    def einsum(self, eqn, args): raise NotImplementedError
 
 
 class Numpy(ABackend):
@@ -27,6 +28,7 @@ class Numpy(ABackend):
     def expand(self, x, mul_shape): return x.tile(mul_shape)
     def stack(self, xlist, axis): return self.np.stack(xlist, axis=axis)
     def concat(self, xlist, axis): return self.np.concatenate(xlist, axis=axis)
+    def einsum(self, eqn, args): return self.np.einsum(eqn, *args)
 
 class PyTorch(ABackend):
     name = 'pytorch'
@@ -40,6 +42,7 @@ class PyTorch(ABackend):
     def expand(self, x, mul_shape): return x.expand(mul_shape)
     def stack(self, xlist, axis): return self.torch.stack(xlist, dim=axis)
     def concat(self, xlist, axis): return self.torch.cat(xlist, dim=axis)
+    def einsum(self, eqn, args): return self.torch.einsum(eqn, args)
 
 
 def get_tf_shape(tf, tensor):
@@ -88,6 +91,7 @@ class TF(ABackend):
     def expand(self, x, mul_shape): return self.tf.tile(x, mul_shape)
     def stack(self, xlist, axis): return self.tf.stack(xlist, axis=axis)
     def concat(self, xlist, axis): return self.tf.concat(xlist, axis=axis)
+    def einsum(self, eqn, args): return self.tf.einsum(eqn, args)
 
 
 becache  = {}

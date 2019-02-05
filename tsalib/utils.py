@@ -1,5 +1,14 @@
 from .tsn import tsn_to_str_list, tsn_to_tuple
 
+def get_nth_symbol(n, first=97):
+    #48 (0), 65(A), 97(a)
+    #first = 945 #alpha
+    return chr(first+n)
+
+def get_lowercase_symbols(n, except_char=None):
+    symbols = [chr(97+i) for i in range(26)]
+    if except_char: symbols.remove(except_char)
+    return symbols[:n]
 
 def int_shape(*s):
     if len(s) == 1: 

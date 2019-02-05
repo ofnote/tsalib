@@ -125,36 +125,45 @@ def join_transform (tlist, tfm):
     return _join_transform(tlist, l.strip(), r.strip())
 
 
-def align_transform (src, to):
+def align_transform (src, to, tile=False):
     '''
     src: tsn 'd,d'
     to: tsn '6, d, t, d'
+    tile: duplicate src values along new dimensions
     return: '^,,^,' [expansion shorthand for src]
+        if tile is True: also return (6,1,int(T),1)
     '''
 
-    lhs = tsn_to_tuple(src) #TupleSeq(B, C, D)
-    rhs = tsn_to_tuple(to) 
+    lhs = tsn_to_tuple(src) #(D, D)
+    rhs = tsn_to_tuple(to)  #(6, D, T, D)
 
     assert isinstance(lhs, tuple)
     assert isinstance(rhs, tuple)
 
     lhs_pos, rhs_pos = 0, 0
-    res = []
-    for rhs_pos, d in enumerate(rhs):
-        if lhs[lhs_pos] == d: 
+    expand_dims = []
+    expand_ratio = []
+    for rhs_pos, S in enumerate(rhs):
+        if lhs[lhs_pos] == S: 
             #print ('match', d, lhs[lhs_pos])
-            res.append('')
+            expand_dims.append('')
+            if tile: expand_ratio.append(1)
             lhs_pos += 1
         else:
-            res.append('^')
-
+            expand_dims.append('^')
+            if tile:
+                try:
+                    #may fail if S does not eval to a int value
+                    expand_ratio.append(int(S))
+                except:
+                    expand_ratio.append(S)
     #print (lhs_pos, res)
 
     if lhs_pos != len(lhs):
         print (f'Unable to align {src} to {to}: {src} not a subsequence of {to}')
         raise ValueError
 
-    return ','.join(res)
+    return ','.join(expand_dims), expand_ratio
 
 
 
@@ -175,11 +184,11 @@ def _expansions_as_dict(expansions):
     return exp_map
 
 
-def expand_transform (src, expansions, in_shape):
+def _expand_transform (src, expansions, in_shape):
     '''
     :src        (B, T, D) = (10, 20, 300)
     :expansions [(T, T*5), (D, D*4)]
-    :returns the expansion shape tuple
+    :returns the expansion shape tuple (-1, 100, 1200)
     '''
     src = tsn_to_tuple(src)
     exp_map = _expansions_as_dict(expansions)
@@ -200,7 +209,7 @@ def expand_transform (src, expansions, in_shape):
     res = resolve_to_int_tuple(res)
     return res
 
-def expand_transform2(x, tfm):
+def expand_dims_transform(x, tfm):
     '''
     x: (backend) tensor, e.g., shape 'd,d'
     tfm: expand tsn: '^,,^,'
@@ -210,10 +219,12 @@ def expand_transform2(x, tfm):
     #print (f'expand: {tfm}')
     colon = slice(None)
     expand_tup = tuple(None if c == '^' else colon for c in tfm.split(','))
-    return x[expand_tup]
+    res = x[expand_tup]
+
+    return res
 
 
-def alignto(x, ys, expand=False):
+def alignto(x, ys, tile=False):
     '''
     Align tensor x's shape to y's shape.
     Assume x's shape is a subsequence of y's shape
@@ -222,10 +233,15 @@ def alignto(x, ys, expand=False):
     ys: y_shape (tsn of target tensor)
     '''
 
+    if tile:
+     raise NotImplementedError('tiling to be implemented.')
+
     assert isinstance(x, tuple), 'First argument is of form (tensor_var, tsn)'
+    assert isinstance(ys, str)
     xt, xs = x
-    expand_tfm = align_transform(xs, ys)
-    return expand_transform2(xt, expand_tfm)
+    expand_tfm, expand_ratio = align_transform(xs, ys, tile)
+    exp_1 = expand_dims_transform(xt, expand_tfm)
+    return exp_1
 
 
 
