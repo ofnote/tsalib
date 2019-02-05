@@ -12,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Adapted by Nishant Sinha for tsalib
 """The main BERT model and related functions."""
 
 from __future__ import absolute_import
@@ -673,7 +675,7 @@ def attention_layer(from_tensor: 'b*t,d',
                             seq_length: 't', width: 'd'):
     #print (f'tran for sc: {get_shape_list(input_tensor)}')
     #nah = num_attention_heads
-    return warp(input_tensor, [f'b*t,d -> btnh', '_tn_ -> _nt_'], 'vp')
+    return warp(input_tensor, ['b*t,d -> btnh', '_tn_ -> _nt_'], 'vp')
 
   from_shape = get_shape_list(from_tensor, expected_rank=[2, 3])
   to_shape = get_shape_list(to_tensor, expected_rank=[2, 3])

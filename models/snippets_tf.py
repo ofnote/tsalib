@@ -1,23 +1,23 @@
 
 def modeling_embedding_lookup(input_ids: 'bti'):
-    # illustrates local dim var usage, i is not declared globaly
+    # illustrates local dim var usage, i is not declared globaly as dimvar
     B, T, D = dim_vars('B(b):13 L(t):7 D(d):32')
     embedding_size = D
     i = get_shape_list(input_ids)[-1] #num inputs
-    #TODO: define/pickup i from input_ids
 
     output: 'b*t*i,d'
 
     # OLD
+    
     input_shape: 'bti' = get_shape_list(input_ids)
     output: 'btd' = tf.reshape(output,
                       input_shape[0:-1] + [input_shape[-1] * embedding_size])
 
-    # NEW
-    #no need for input_shape
+    # NEW: crisp one-liner
+
     output: 'btd' = warp(output, tfms=f'b*t*{i},d -> b,t,d*{i}', tfm_names='r')
   
-    #assert output.get_shape() == (B, T, D)
+    assert output.get_shape() == (B, T, D)
 
 
 

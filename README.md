@@ -52,15 +52,14 @@ Tensor shape annotations (TSAs) are constructed using `dimension` variables --`B
 TSAs may be represented as tuples or *shorthand* strings:
 * a tuple `(B,H,D)` [long form]
 * a string `'b,h,d'` (or simply `'bhd'`)
-* a string with anonymous dimensions (`',h,'` is a 3-d tensor).
+* a string with anonymous dimensions (`',h,'` or `_h_` is a 3-d tensor).
 
-The tensor shorthand notation ([TSN](notebooks/shorthand.md)), is used extensively in tsalib.
+The tensor shorthand notation ([TSN](notebooks/shorthand.md)) is used extensively in tsalib.
 
-Here is an example snippet which uses TSAs and TSNs in a `pytorch` program to define, transform and verify tensor shapes. `tsalib` is designed to work seamlessly with arbitrary backends:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
+Here is an example snippet which uses TSAs and TSNs to define, transform and verify tensor shapes. `tsalib` is designed to work seamlessly with arbitrary backends:  `numpy`, `pytorch`, `keras`, `tensorflow`, `mxnet`, etc.
 
 ```python
-from tsalib import dim_vars as dvs
-from tsalib import view_transform as vt, permute_transform as pt
+from tsalib import dim_vars as dvs, size_assert
 
 #declare dimension variables
 B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256') 
@@ -68,7 +67,7 @@ B, C, H, W = dvs('Batch:32 Channels:3 Height:256 Width:256')
 # create tensors (pytorch) using dimension variables (interpret dim vars as integers)
 x: (B, C, H, W)=torch.randn( (B, C, H, W) )
 # or use shorthand labels
-x: 'bchw'=tf.get_variable("v", shape=(B, C, H, W), initializer=tf.random_normal_initializer())
+x: 'bchw'=tf.get_variable("x", shape=(B, C, H, W), initializer=tf.random_normal_initializer())
 
 # perform tensor transformations
 x: (B, C, H // 2, W // 2) = maxpool(x) 
@@ -85,23 +84,24 @@ assert x1.size() == (B, C, (H//2)*(W//2))
 
 ```
 
-Use tensor shorthand notation ([TSN](notebooks/shorthand.md)) to write intuitive and quick shape changes.
+Note how TSAs are used as optional type annotations supported by Python >= 3.5. These annotations are optional and do not affect program performance.
+
+Use TSNs to write intuitive and crisp shape transformations.
 
 ```python
+from tsalib import permute_transform as pt
 
 # permute: irrelevant dimensions are anonymous (underscores).
 x: (B, C, H, W)
 x1 = x.permute(pt('_c__ -> ___c'))
 assert x1.size() == (B, H, W, C)
 
-# Writing multiple shape transforms one-by-one gets cumbersome
 # A powerful one-stop `warp` operator to compose multiple transforms inline
-
 # here: a sequence of a permute ('p') and view ('v') transformations
 y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
 assert y.size() == (B*C,H,W)
 
-#or, with anonymous dims
+#or, the same transformation sequence with anonymous dims
 y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
 ``` 
@@ -135,7 +135,7 @@ import numpy as np
 ```python
 #or declare dim vars with default integer values (optional)
 B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
-#or provide optional *shorthand* names for dim vars, default values
+#or provide *shorthand* names and default values for dim vars [best practice]
 B, C, D, H, W = dvs('Batch(b):48 Channels(c):3 EmbedDim(d):300 Height(h) Width(w)')
 
 # switch from using config constants to using dimension vars
@@ -148,7 +148,7 @@ B, C, D = dvs('Batch(b):{0} Channels(c):{1} EmbedDim(d):{2}'.format(config.batch
 Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` uniformly throughout your code.
 
 ```python
-B, D = dvs('Batch:{batch_size} EmbedDim:{embed_dim}}')
+B, D = dvs('Batch(b):{batch_size} EmbedDim(d):{embed_dim}}')
 #declare a 2-D tensor of shape(48, 300)
 x = torch.randn(B, D)
 #assertions over dimension variables (code unchanged even if dim sizes change)
@@ -156,13 +156,16 @@ assert x.size() == (B, D)
 ```
 
 
-#### Use TSAs to annotate variables on-the-go (Python 3)
+#### Use TSAs to annotate variables on-the-go
 
 ```python
 B, D = get_dim_vars('b d') #lookup pre-declared dim vars
 a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
-
 b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
+
+#or simply, use TSNs
+a: 'b,d'
+b: '2bd'
 ```
 Annotations are optional and do not affect program performance.
 
@@ -230,7 +233,7 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 
 See [notebook](notebooks/tsalib.ipynb) for complete working examples.
 
-#### `join`, `alignto`, `reduce_dims` ...
+#### More useful operators: `join`, `alignto`, `reduce_dims` ...
 <details>
     <summary>more ..</summary>
 
