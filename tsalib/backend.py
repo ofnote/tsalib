@@ -105,6 +105,10 @@ def get_backend_for_tensor(x):
     '''
     get backend for tensor x
     '''
+    if isinstance(x, (tuple,list)):
+        assert len(x) > 0
+        x = x[0]
+        
     t = str(type(x))
 
     if 'numpy.' in t: ret = from_cache(Numpy)

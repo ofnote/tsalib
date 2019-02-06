@@ -1,6 +1,7 @@
 from .tsn import tsn_to_tuple, tsn_to_str_list
 from .backend import get_backend_by_name, get_backend_for_tensor
 from .transforms import _view_transform, _permute_transform, _join_transform, _expand_transform
+from .transforms import alignto
 from .utils import get_lowercase_symbols
 
 def get_backend(backend, x):
@@ -106,13 +107,15 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
             print(f'*** processing transform.. {sym}\n {l} -> {r}')
         if sym == 'v' or sym == 'r': #view transform
             new_shape = _view_transform(l, r, be.shape(ret))
-            ret = be.view(x, new_shape)
+            ret = be.view(ret, new_shape)
         elif sym == 'p' or sym == 't':
             perm_indices = _permute_transform(l, r)
             ret = be.transpose(ret, perm_indices)
         #elif sym == 'e':
         #    expand_shape = _expand_transform(l, r)
         #    ret = be.expand(ret, expand_shape)
+        elif sym == 'a':
+            ret = alignto((ret, l), r)
         elif sym == 'c': 
             ret = be.contiguous(ret)
         elif sym == 'j':
@@ -162,9 +165,9 @@ def tsn_fill_dot_eqn (lhs, placeholders=['_','^','']):
 
 
 def dot (tfm, x, y, backend=None):
-    if '->' in tfm: #call einsum 
-        #raise NotImplementedError('todo: call einsum directly')
+    if '->' in tfm: 
         eqn = tfm.replace('.',',')
+        #call einsum
     else:
         if '.' not in tfm:
             print ('To avoid confusion, please separate the shorthand shapes by ".", e.g., "_d.d__"')

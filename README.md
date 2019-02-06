@@ -113,6 +113,7 @@ assert y.size() == (B*C,H,W)
 y = warp (x1, ['_hwc -> _chw', 'bc,, -> b*c,,'], 'pv')
 
 # Combinations of `alignto`, `dot` and broadcast
+# Enables writing really compact code for similar patterns
 ht: 'bd'; Wh: 'dd'; Y: 'bld'; WY: 'dd'
 
 a: 'bd' = dot('_d.d_', ht, Wh) 
@@ -130,9 +131,10 @@ Mt: 'bld' = torch.tanh(dot('__d.d_', Y, WY) + b)
 This [notebook](notebooks/tsalib.ipynb) serves as a working documentation for the `tsalib` library and illustrates the complete `tsalib` API. The **shorthand** notation is documented [here](notebooks/shorthand.md).
 
 The [models](models) directory contains tsalib annotations of a few well-known, complex neural architectures: 
-- [Resnet](models/resnet.py),
-- [OpenAI Transformer](models/openai_transformer.py),
 - [BERT](models/bert). 
+- [OpenAI Transformer](models/openai_transformer.py),
+- [Resnet](models/resnet.py),
+- Contrast models with and without tsalib ([pytorch](models/snippets_pytorch.py), [tensorflow](models/snippets_tf.py)).
 
 With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` (or equivalent) function.
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
@@ -240,7 +242,7 @@ Avoid explicit shape computations for `reshaping`. The `*_transform` functions a
 
 #### One-stop shape transforms: `warp` operator
 
-The `warp` operator allows squeezing in a **sequence** of shape transformations in a single line using [TSN](notebooks/shorthand.md). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
+The `warp` operator enables squeezing in a **sequence** of shape transformations in a single line using [TSN](notebooks/shorthand.md). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
 ```python
     x: 'btd' = torch.randn(B, T, D)

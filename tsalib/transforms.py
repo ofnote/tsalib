@@ -50,16 +50,23 @@ def _permute_transform(src, to):
     :to is the target dimension arragement, list of named dim variables
     :returns the index tuple for the permutation (backend independent)
     '''
-    src = tsn_to_tuple(src)
-    to = tsn_to_tuple(to)
-    assert isinstance(src, tuple)
-    assert isinstance(to, tuple)
+    lhs = tsn_to_tuple(src, num_to_sym=True)
+    rhs = tsn_to_tuple(to, num_to_sym=True)
+    #print (src, lhs, to, rhs)
+    assert isinstance(lhs, tuple)
+    assert isinstance(rhs, tuple)
 
-    assert len(src) == len(to), "Source and Target shapes for permutation are not same"
+    assert len(lhs) == len(rhs), "Source and Target shapes for permutation are not same"
 
-    sub_map = [(d.exp, i) for i, d in enumerate(src)]
-    perm_indices = tuple([t.exp.subs(sub_map) for t in to])
-    perm_indices = resolve_to_int_tuple(perm_indices)
+    #map each lhs expression to a string '0', '1', '2', ... (sympy.Symbol)
+    #this avoids double substitution if lhs contains sympy.Integer values
+    sub_map = [(d.exp, f'{i}') for i, d in enumerate(lhs)]
+    #print (sub_map)
+    perm_indices = tuple([t.exp.subs(sub_map) for t in rhs])
+    # resolve symbols to integers
+    perm_indices = tuple([int(str(s)) for s in perm_indices])
+    #perm_indices = resolve_to_int_tuple(perm_indices)
+    #print (perm_indices)
 
     return perm_indices
 
@@ -144,7 +151,7 @@ def align_transform (src, to, tile=False):
     expand_dims = []
     expand_ratio = []
     for rhs_pos, S in enumerate(rhs):
-        if lhs[lhs_pos] == S: 
+        if lhs_pos < len(lhs) and lhs[lhs_pos] == S: 
             #print ('match', d, lhs[lhs_pos])
             expand_dims.append('')
             if tile: expand_ratio.append(1)
@@ -237,7 +244,7 @@ def alignto(x, ys, tile=False):
      raise NotImplementedError('tiling to be implemented.')
 
     assert isinstance(x, tuple), 'First argument is of form (tensor_var, tsn)'
-    assert isinstance(ys, str)
+    assert isinstance(ys, (str, tuple)) #TODO: tuple -> Shape
     xt, xs = x
     expand_tfm, expand_ratio = align_transform(xs, ys, tile)
     exp_1 = expand_dims_transform(xt, expand_tfm)

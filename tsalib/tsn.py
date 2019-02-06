@@ -6,7 +6,7 @@ from .ts import DimVar, DimExpr, dummy_dvar, TupleSeq
 from sympy import sympify, Symbol
 import re
 
-def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
+def _sexpr_to_ts (e, dummy_idx=0, strict=False, num_to_sym=False):
     '''
     A single string expression (sexpr) to Tensor Shape expressions (ts)
     Converts shorthand dummy/empty placeholders to dummy TSs
@@ -15,6 +15,7 @@ def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
         t = e
     else: 
         assert isinstance(e, str)
+        if e.isdigit() and num_to_sym: e = '_' #convert to dummy var
         if e == '' or e =='_':  
             t = dummy_dvar(dummy_idx)
             dummy_idx += 1
@@ -27,7 +28,7 @@ def _sexpr_to_ts (e, dummy_idx=-1, strict=False):
 
     return t, dummy_idx
 
-def _sexprs_to_ts(exprs, strict=False):
+def _sexprs_to_ts(exprs, strict=False, num_to_sym=False):
     '''
     String expressions (sexprs) to Tensor Shape expressions (ts)
     Converts shorthand dummy/empty placeholders to dummy TSs
@@ -36,7 +37,7 @@ def _sexprs_to_ts(exprs, strict=False):
     dummy_idx = 0
     res = []
     for e in exprs:
-        t, dummy_idx = _sexpr_to_ts(e, dummy_idx, strict)
+        t, dummy_idx = _sexpr_to_ts(e, dummy_idx=dummy_idx, strict=strict, num_to_sym=num_to_sym)
         res.append(t)
 
     #print (exprs, res)
@@ -64,7 +65,7 @@ def tsn_to_str_list(ss: str):
 
     return exprs, is_seq 
 
-def tsn_to_tuple (ss):
+def tsn_to_tuple (ss, num_to_sym=False):
     '''
     :ss is shape string, e.g., 'btd' or 'b,t,d*2' or '(btd)*'
     :returns the shape representation in tuple/TupleSeq form
@@ -76,7 +77,7 @@ def tsn_to_tuple (ss):
         return ss
     elif isinstance(ss, str):
         exprs, is_seq = tsn_to_str_list(ss)  # 'btd' -> 'b', 't', 'd'
-        exprs = _sexprs_to_ts(exprs)
+        exprs = _sexprs_to_ts(exprs, num_to_sym=num_to_sym)
         for e in exprs:
             assert isinstance(e, DimExpr)
 
@@ -107,6 +108,7 @@ def resolve_to_int_tuple(s):
     res = []
     for d in s:
         try: 
+            #print (type(d), d)
             d = int(d)
             res.append(d)
         except:
