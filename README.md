@@ -5,8 +5,8 @@ Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pyt
 The `tsalib` library enables you to write 
 - first-class, library-independent, shape annotations (TSAs) over **named dimension variables** (`x: (B,T,D)`),
 - defensive **shape assertions** using these named shapes, 
-- more *fluent* shape **transformations** and tensor **operations** using tensor shorthand notation (**TSN**). (`b,d,t`).
-- avoid memorizing a laundry list of APIs (`reshape`,`permute`,`stack`, `concat`) -- use the *one-stop* **warp** operator for shape transformations. `warp(x, 'btd -> bdt -> b,d//2,t*2', 'pv')`
+- more *fluent* shape **transformations** and tensor **operations** using tensor shorthand notation (**TSN**). (`'b,d,t'`).
+- avoid memorizing a laundry list of APIs (`reshape`,`permute`,`stack`, `concat`) -- use the *one-stop* **warp** operator for shape transformations. `warp(x, '(btd)* -> btdl -> bdtl -> b,d//2,t*2,l', 'jpv')`
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
@@ -17,9 +17,9 @@ Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-an
 <details>
     <summary> <b>Why tsalib?</b> Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. ...
     </summary>
-
     For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`). 
     `tsalib` comes to our rescue here. It allows you to write symbolic shape expressions over dimension variables describing tensor variable shapes. These expressions can be used in multiple ways: 
+
     - as first-class annotations of tensor variables,
     - to write `symbolic` shape `assert`ions and tensor constructors
     - to specify shape transformations (`warp`, `join`, `permute`) succinctly. 
