@@ -26,7 +26,8 @@ from allennlp.common.from_params import FromParams
 import sys
 sys.path.append('../')
 from tsalib import dim_vars, warp
-B, T, D, H = dim_vars('Batch SeqLength EmbedDim NumHeads')
+
+B, T, D, H = dim_vars('Batch SeqLength EmbedDim(d):768 NumHeads(h):12')
 
 def gelu(x: torch.Tensor) -> torch.Tensor:
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
@@ -39,6 +40,20 @@ _ACTIVATION_FUNCTIONS = {
         'swish': swish,
         'gelu': gelu
 }
+
+
+class TransformerConfig(NamedTuple):
+    """
+    The transformer has to pass a bunch of params to its submodules,
+    this bundles them together to make things easier.
+    """
+    embedding_dim: int = 768
+    num_heads: int = 12
+    embedding_dropout_probability: float = 0.1
+    attention_dropout_probability: float = 0.1
+    residual_dropout_probability: float = 0.1
+    activation_function: str = 'gelu'
+
 
 class LayerNorm(torch.nn.Module):
     "Construct a layernorm module in the OpenAI style (epsilon inside the square root)."
@@ -68,7 +83,9 @@ class Conv1D(torch.nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x: (B, T, self.nx)) -> torch.Tensor:
+    def forward(self, x) -> torch.Tensor:
+        x: (B, T, self.nx)
+
         if self.rf == 1:
             size_out: (B, T, self.nf) = x.size()[:-1] + (self.nf,)
             x1: (B*T, self.nx) = x.view(-1, x.size(-1))
@@ -133,7 +150,9 @@ class Attention(torch.nn.Module):
 
         return ret
 
-    def forward(self, x: (B, T, self.nx)) -> torch.Tensor:
+    def forward(self, x) -> torch.Tensor:
+        x: (B, T, self.nx)
+
         D = self.split_size
         H = self.n_head
         
@@ -180,7 +199,7 @@ class Block(torch.nn.Module):
     def forward(self, x: (B,T,D)) -> torch.Tensor:
         a: (B,T,D) = self.attn(x)
         n: (B,T,D) = self.ln_1(x + a)
-        m: (B, T, D) = self.mlp(n)
+        m: (B,T,D) = self.mlp(n)
         h: (B,T,D) = self.ln_2(n + m)
         return h
 
@@ -267,7 +286,7 @@ class OpenaiTransformer(torch.nn.Module, FromParams):
         if model_path:
             self.load_weights(model_path, n_special=n_special, n_ctx=n_ctx)
 
-    def forward(self, x: (B,T)) -> List[B, T, D]:
+    def forward(self, x: (B,T)) -> '(btd)*':
         # x is (batch_size, sequence_length) tensor of byte-pair ids
 
         # e is (batch_size, sequence_length, 2, embedding_dim) tensor of embeddings
@@ -275,7 +294,7 @@ class OpenaiTransformer(torch.nn.Module, FromParams):
 
         h: (B, T, D) = e.sum(dim=2)
 
-        all_layers: List[B,T,D] = [h]
+        all_layers: '(btd)*' = [h]
         for block in self.h:
             h = block(h)
             all_layers.append(h)
