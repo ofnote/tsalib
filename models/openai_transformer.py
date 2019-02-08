@@ -75,6 +75,7 @@ class Conv1D(torch.nn.Module):
         super().__init__()
         self.rf = rf
         self.nf = nf
+        self.nx = nx
         if rf == 1:
             w = torch.empty(nx, nf)
             torch.nn.init.normal_(w, std=0.02)
@@ -88,7 +89,7 @@ class Conv1D(torch.nn.Module):
 
         if self.rf == 1:
             size_out: (B, T, self.nf) = x.size()[:-1] + (self.nf,)
-            x1: (B*T, self.nx) = x.view(-1, x.size(-1))
+            x1: (B*T, nx) = x.view(-1, x.size(-1))
             x: (B*T, self.nf) = torch.addmm(self.b, x1, self.w)
             x: (B, T, self.nf) = x.view(*size_out)
         else:
