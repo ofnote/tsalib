@@ -101,21 +101,32 @@ def from_cache(C):
         becache[s] = C()
     return becache[s]
 
-def get_backend_for_tensor(x):
-    '''
-    get backend for tensor x
-    '''
+def get_tensor_lib(x):
     if isinstance(x, (tuple,list)):
         assert len(x) > 0
         x = x[0]
         
     t = str(type(x))
 
-    if 'numpy.' in t: ret = from_cache(Numpy)
-    elif 'torch.' in t: ret = from_cache(PyTorch)
-    elif 'tensorflow.' in t: ret = from_cache(TF)
-    else: 
-        raise NotImplementedError(f'Unsupported tensor type {t}. Contributions welcome.')
+    if 'numpy.' in t: ret = Numpy
+    elif 'torch.' in t: ret = PyTorch
+    elif 'tensorflow.' in t: ret = TF
+    else: ret = None
+
+
+    return ret
+
+
+def get_backend_for_tensor(x):
+    '''
+    get backend for tensor x
+    '''
+    tlib = get_tensor_lib(x)
+
+    if tlib is None:
+        raise NotImplementedError(f'Unsupported tensor type {type(x)}. Contributions welcome.')
+    
+    ret = from_cache(tlib)
 
     return ret
 

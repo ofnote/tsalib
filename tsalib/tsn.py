@@ -68,6 +68,7 @@ def tsn_to_str_list(ss: str):
 def tsn_to_tuple (ss, num_to_sym=False):
     '''
     :ss is shape string, e.g., 'btd' or 'b,t,d*2' or '(btd)*'
+    : num_to_sym : converts numeric values in tsn to anonymous symbols ('_')
     :returns the shape representation in tuple/TupleSeq form
     '''
     if isinstance(ss, (list, tuple)):
