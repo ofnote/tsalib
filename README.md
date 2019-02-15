@@ -7,7 +7,10 @@
 
 Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of tensors. Carrying around the tensor shapes in your head gets increasingly hard as programs become more complex. For example, reshaping before a `matmult`, figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`), designing new kinds of `attention` mechanisms (`multi-head attention`), and so on.
 
-In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)). The `tsalib` library enables you to write 
+In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)). 
+
+---
+The `tsalib` library enables you to write 
 - first-class, library-independent, shape annotations (TSAs) over **named dimension variables** (`x: (B,T,D)`),
 - defensive **shape assertions** using these named shapes (`assert x.shape == (B,T,D)`), 
 - more *fluent* shape **transformations** and tensor **operations** using tensor shorthand notation (**TSN**). (`'b,d,t'`).
@@ -15,7 +18,6 @@ In absence of a principled way to *name* tensor dimensions and track shapes, mos
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
----
 The complete **API** for tsalib is illustrated in a **notebook** [here](notebooks/tsalib.ipynb). 
 Quick start [here](#Dimension-Variables).
 Detailed **article** [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
@@ -38,7 +40,7 @@ def merge_heads_tsalib(x: 'bhtd'):
 
 </details>
 
-
+---
 ## Contents
 
 - [Quick Start -- Dimension Variables, Tensor Shorthand Notation](#Dimension-Variables)
