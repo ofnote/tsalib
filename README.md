@@ -15,6 +15,7 @@ In absence of a principled way to *name* tensor dimensions and track shapes, mos
 
 TSAs expose the typically *invisible* tensor dimension names, which enhances code clarity, accelerates debugging and leads to improved productivity across the board. 
 
+---
 The complete **API** for tsalib is illustrated in a **notebook** [here](notebooks/tsalib.ipynb). 
 Quick start [here](#Dimension-Variables).
 Detailed **article** [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
