@@ -497,6 +497,7 @@ def embedding_postprocessor(input_tensor: 'btd',
 
   B, T, D = int_shape(get_dim_vars('b t d'))
   batch_size, seq_length, width = B, T, D
+  print (D)
   size_assert(get_shape_list(input_tensor), (B,T,D))
 
   output: 'btd' = input_tensor
