@@ -1,6 +1,7 @@
 # Tensor Shape Annotations Library (tsalib)
 [![PyPI version](https://badge.fury.io/py/tsalib.svg)](https://badge.fury.io/py/tsalib)
-![Chat](https://img.shields.io/gitter/room/offfnote/tsalib.svg?colorB=yellow&style=plastic)
+[![Chat](https://img.shields.io/gitter/room/offfnote/tsalib.svg?colorB=yellow&style=plastic)](https://gitter.im/offfnote/tsalib)
+
 
 Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pytorch`, `keras`, `tensorflow`, ...) requires you to carefully keep track of shapes of tensors. In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)).
 

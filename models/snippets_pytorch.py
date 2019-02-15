@@ -34,7 +34,7 @@ def merge_heads1(x: (B,H,T,D)):
 from tsalib import warp
 
 def merge_heads2(x: (B,H,T,D)):
-    res: (B,T,H*D) = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pv', debug=False)
+    res: (B,T,H*D) = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv', debug=False)
     return res
 
 
@@ -125,7 +125,7 @@ def tsa_attn(Y, ht, rt1):
     return rt, at
 
 def test_tsa_attn():
-    B, L, D = dvs('Batch(b):3, sequence_length(l):5 hidden_dimension(d):7', exists_ok=True)
+    B, L, D = dvs('Batch(b):3, sequence_length(l):5 hidden_dimension(d):300', exists_ok=True)
 
     Y = random_tensors([B, L, D])
     ht, rt1 = random_tensors([B, D], num=2)

@@ -50,12 +50,13 @@ class DimVar:
         self._val = int(val) if val is not None else nan
         
         self._e = Symbol(self._sname)
-        if not exists_ok and self._e in DimVar.decls:
+        if self._e in DimVar.decls:
             prevd = DimVar.decls[self._e]
-            raise ValueError(f'DimVar {self._sname} already declared as {prevd._name}({self._e}). Use exists_ok=True to skip check.')
+            if not exists_ok:
+                raise ValueError(f'DimVar {self._sname} already declared as {prevd._name}({self._e}). Use exists_ok=True to skip check.')
 
-        if cache:       
-            DimVar.decls[self._e] = self
+        else:
+            if cache: DimVar.decls[self._e] = self
 
     @property
     def exp(self): return self._e
@@ -72,8 +73,10 @@ class DimVar:
     @staticmethod
     def check_decl(sname):
         return Symbol(sname) in DimVar.decls
+
     @staticmethod
     def lookup(sname):
+        #lookup by short name
         sn = Symbol(sname)
         #print (f'lookup: {sn} {len(DimVar.decls)}')
         if len(DimVar.decls) == 0: 
@@ -82,9 +85,18 @@ class DimVar:
         return DimVar.decls[sn]
 
     @staticmethod
+    def lookup2(name):
+        #lookup by (long) name
+        for k, decl in DimVar.decls.items():
+            #print ('** lookup2', name, decl._name)
+            if decl._name == name: return decl
+        assert False, f'DimVar with name {name} not declared'
+
+    @staticmethod
     def eval(e):
         sub_map = [(e, dv._val) for e, dv in DimVar.decls.items()]
         ret = e.subs(sub_map)
+        #print (e, sub_map)
         #print (f'eval: {e} -> {ret}')
         return ret
 
@@ -102,6 +114,7 @@ class DimExpr:
     def __init__(self, t, is_dvar=False):
         self._e = None
         self.is_dvar = is_dvar # a basic dimension var
+        self._val = None #value of dimvar (nan if not set)
 
         if isinstance(t, int):
             self._e = Integer(t)
@@ -183,6 +196,9 @@ def dummy_dvar(pos):
     #print (f'dummy {d}')
     return d
 
+def is_dummy (dvar):
+    return '_dm_' in str(dvar.exp)
+
 def dim_vars_from_shape(names, shape, exists_ok=False):
     '''
     Declare dim vars corresponding to dimensions of tensor
@@ -216,6 +232,17 @@ def get_dim_vars(names):
     if len(names) == 1: return res[0]
     else: return res
 
+def get_dim_vars_by_long_name(names):
+    '''
+    names: 'B Channel D'
+    '''
+    names = names.strip().split(' ')
+    res = [DimExpr(DimVar.lookup2(name)) for name in names]
+    if len(names) == 1: return res[0]
+    else: return res
+
+
+def get_decls (): return DimVar.decls
 
 #def update_dim_var_size ():
 #avoid this function

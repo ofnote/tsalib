@@ -7,7 +7,7 @@ import torch.utils.model_zoo as model_zoo
 
 import sys
 sys.path.append('../')
-from tsalib import dim_vars, declare_common_dim_vars
+from tsalib import dim_vars
 
 B, C, Ci, Co = dim_vars('Batch Channels ChannelsIn ChannelsOut')
 H, W, Ex = dim_vars('Height Width BlockExpansion')
