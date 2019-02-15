@@ -20,7 +20,7 @@ Quick start [here](#Dimension-Variables).
 Detailed **article** [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
 <details>
-    <summary>[**Compare**] Old Code vs New Code: </summary>
+    <summary>[<b>Compare</b>] Old Code vs New Code: </summary>
 
 ```
 def merge_heads_old(x):

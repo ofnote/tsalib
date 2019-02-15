@@ -27,8 +27,9 @@ def _view_transform (src, to, in_shape, checkin=False):
 
     #sub_map = [(d.e, Symbol(f'{i}')) for i, d in enumerate(src)]
     sub_map = [(d.exp, in_shape[i]) for i, d in enumerate(src)]
+    #print (to, sub_map)
     out_shape = tuple([t.exp.subs(sub_map) if isinstance(t, DimExpr) else int(t) for t in to])
-
+    #print (out_shape)
     out_shape = resolve_to_int_tuple(out_shape)
     return out_shape
 

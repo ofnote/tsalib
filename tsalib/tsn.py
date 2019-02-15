@@ -115,10 +115,10 @@ def resolve_to_int_tuple(s):
         except:
             if isinstance(d, DimExpr):
                 e = d.exp
-            elif isinstance(d, Symbol):
-                e = d
             else:
-                raise ValueError(f'Unknown item {d}: {type(d)}')
+                e = d
+                #raise ValueError(f'Unknown item {d}: {type(d)}')
+
             r = DimVar.eval(e)
             #print('r is ', r)
             try: 
