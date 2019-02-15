@@ -22,18 +22,19 @@ Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-an
 
 <details>
     <summary>[Compare] Old Code vs New Code: 
-<code>
+
+```
 def merge_heads_old(x: 'bhtd'):
   x = x.permute(0, 2, 1, 3).contiguous()
   new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),)
   res = x.view(*new_x_shape)
-</code>
+```
 
 
-<code>
+```
 def merge_heads_tsalib(x: 'bhtd'):
     res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv')
-</code>
+```
 
 </summary>
 
