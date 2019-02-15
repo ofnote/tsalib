@@ -22,7 +22,7 @@ Detailed article [here](https://medium.com/@ekshakhs/introducing-tensor-shape-an
 
 | Existing Code | Code with tsalib |
 | --- | --- |
-|<code>def merge_heads_old(x: 'bhtd'): <br/>&nbsp;&nbsp;&nbsp;&nbsp;x = x.permute(0, 2, 1, 3).contiguous() <br>&nbsp;&nbsp;&nbsp;&nbsp;new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),) <br>&nbsp;&nbsp;&nbsp;&nbsp; res = x.view(*new_x_shape) </code> | <code> def merge_heads_tsalib(x: 'bthd': <br>&nbsp;&nbsp;&nbsp;&nbsp; res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h\*d', 'pcv') </code> |
+|<code>def merge_heads_old(x: 'bhtd'): \ &nbsp;&nbsp;&nbsp;&nbsp;x = x.permute(0, 2, 1, 3).contiguous() <br>&nbsp;&nbsp;&nbsp;&nbsp;new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),) <br>&nbsp;&nbsp;&nbsp;&nbsp; res = x.view(*new_x_shape) </code> | <code> def merge_heads_tsalib(x: 'bthd': <br>&nbsp;&nbsp;&nbsp;&nbsp; res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h\*d', 'pcv') </code> |
 
 ## Contents
 
