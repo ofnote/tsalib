@@ -42,7 +42,7 @@ class BertConfig(object):
                vocab_size: 'v',
                hidden_size: 'd'=768,
                num_hidden_layers: 'l'=12,
-               num_attention_heads: 'n'=12,
+               num_attention_heads: 'n'=4,
                intermediate_size: 's'=3072,
                hidden_act="gelu",
                hidden_dropout_prob=0.1,
@@ -81,6 +81,8 @@ class BertConfig(object):
     Nl, N =  dim_vars(f'num_hidden_layers(l):{num_hidden_layers} num_attention_heads(n):{num_attention_heads}', exists_ok=True)
     IS, P, Vt = dim_vars(f'intermediate_size(s):{intermediate_size} max_position_embeddings(p):{max_position_embeddings} type_vocab_size(vt):{type_vocab_size}', exists_ok=True)
     H = dim_vars(f'size_per_head(h):{hidden_size // num_attention_heads}', exists_ok=True)
+
+    #print (f'bert config: D = {D}')
 
     self.vocab_size: V = vocab_size
     self.hidden_size: D = hidden_size
@@ -497,7 +499,6 @@ def embedding_postprocessor(input_tensor: 'btd',
 
   B, T, D = int_shape(get_dim_vars('b t d'))
   batch_size, seq_length, width = B, T, D
-  print (D)
   size_assert(get_shape_list(input_tensor), (B,T,D))
 
   output: 'btd' = input_tensor
@@ -740,7 +741,7 @@ def transformer_model(input_tensor: 'btd',
                       attention_mask: 'btt'=None,
                       hidden_size: 'd'=768,
                       num_hidden_layers: 'l'=12,
-                      num_attention_heads: 'h'=12,
+                      num_attention_heads: 'h'=4,
                       intermediate_size: 's'=3072,
                       intermediate_act_fn=gelu,
                       hidden_dropout_prob=0.1,

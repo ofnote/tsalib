@@ -143,10 +143,10 @@ class BertModelTest(tf.test.TestCase):
     self.run_tester(BertModelTest.BertModelTester(self))
 
   def test_config_to_json_string(self):
-    config = modeling.BertConfig(vocab_size=99, hidden_size=37)
+    config = modeling.BertConfig(vocab_size=99, hidden_size=32)
     obj = json.loads(config.to_json_string())
     self.assertEqual(obj["vocab_size"], 99)
-    self.assertEqual(obj["hidden_size"], 37)
+    self.assertEqual(obj["hidden_size"], 32)
 
   def run_tester(self, tester):
     with self.test_session() as sess:

@@ -99,12 +99,9 @@ def tfm_seq_decompose (tfms, tfm_names):
     '''
     tfm_symbols = norm_tfm_names(tfm_names) # ['v', 't']
     tfm_symbols_no_c = [n for n in tfm_symbols if n != 'c'] #list without 'c'
-
-
     shape_pairs = norm_tfms_to_shape_pairs(tfms)
 
-    print (len(tfm_symbols_no_c), len(shape_pairs))
-
+    #print (len(tfm_symbols_no_c), len(shape_pairs))
     assert len(tfm_symbols_no_c) == (len(shape_pairs)), \
             f"Num of transform steps {len(shape_pairs)} and names {len(tfm_symbols_no_c)} do not match"
     
