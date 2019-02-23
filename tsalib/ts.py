@@ -217,7 +217,8 @@ def dim_vars(names, exists_ok=False, cache=True):
     '''
     Declare multiple dimension variables in one go
     '''
-    names = names.strip().split(' ')
+    names = names.split()
+    #print (repr(names))
     tss = [dim_var(name, exists_ok=exists_ok, cache=cache) for name in names]
 
     if len(names) == 1: return tss[0]

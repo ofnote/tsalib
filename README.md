@@ -22,30 +22,13 @@ The complete **API** for tsalib is illustrated in a **notebook** [here](notebook
 Quick start [here](#Dimension-Variables).
 Detailed **article** [here](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b).
 
-<details>
-    <summary>[<b>Compare</b>] Old Code vs New Code: </summary>
-
-```
-def merge_heads_old(x):
-  x = x.permute(0, 2, 1, 3).contiguous()
-  new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),)
-  res = x.view(*new_x_shape)
-```
-
-
-```
-def merge_heads_tsalib(x: 'bhtd'):
-    res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv')
-```
-
-</details>
 
 ---
 ## Contents
 
 - [Quick Start -- Dimension Variables, Tensor Shorthand Notation](#Dimension-Variables)
 - [Installation](#Installation) 
-- [Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples)
+- [Design Principles, Model Examples](#Documentation-Design-Principles-Model-Examples) (includes [BERT](models/bert)!)
 - [API Overview](#API)
 - [Best Practices -- How to use `tsalib`](#Best-Practices)
 - [Change Log](#change-log)
@@ -135,6 +118,24 @@ b: 'b,1,d' = alignto((a,'bd'), 'bld')
 Mt: 'bld' = torch.tanh(dot('__d.d_', Y, WY) + b)
 
 ``` 
+
+<details>
+    <summary>[<b>Compare</b>] Old Code vs New Code: </summary>
+
+```
+def merge_heads_old(x):
+  x = x.permute(0, 2, 1, 3).contiguous()
+  new_x_shape = x.size()[:-2] + (x.size(-2) * x.size(-1),)
+  res = x.view(*new_x_shape)
+```
+
+
+```
+def merge_heads_tsalib(x: 'bhtd'):
+    res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv')
+```
+
+</details>
 
 ## Installation
 
