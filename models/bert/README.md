@@ -13,3 +13,6 @@ Benefits:
 Code size reduced throughout. Lines in `attention_layer` function reduced from ~200 to ~175.
 
 Code can be simplified and cleaned up further.
+
+---
+The TSA-annotated Pytorch version of BERT is available in a separate repository [here](https://github.com/ofnote/pytorch-pretrained-BERT/blob/master/pytorch_pretrained_bert/modeling_tsa.py).

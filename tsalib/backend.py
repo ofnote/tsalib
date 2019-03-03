@@ -101,21 +101,34 @@ def from_cache(C):
         becache[s] = C()
     return becache[s]
 
-def get_tensor_lib(x):
+def get_str_type(x):
+    #print (x)
     if isinstance(x, (tuple,list)):
-        assert len(x) > 0
+        if len(x) == 0: return ''
         x = x[0]
         
     t = str(type(x))
+    return t
+
+def get_tensor_lib(x):
+    t = get_str_type(x)
 
     if 'numpy.' in t: ret = Numpy
     elif 'torch.' in t: ret = PyTorch
     elif 'tensorflow.' in t: ret = TF
     else: ret = None
 
-
     return ret
 
+def is_tensor(x):
+    t = get_str_type(x)
+
+    if 'numpy.' in t: ret = ('numpy.ndarray' in t)
+    elif 'torch.' in t: ret = ('torch.Tensor' in t)
+    elif 'tensorflow.' in t: ret = ('ops.Tensor' in t)
+    else: ret = False
+
+    return ret
 
 def get_backend_for_tensor(x):
     '''

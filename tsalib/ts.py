@@ -62,7 +62,10 @@ class DimVar:
     def exp(self): return self._e
 
     @property
-    def len(self): return self._val
+    def size(self): return self._val
+
+    @property
+    def shortname(self): return self._sname
 
     @property
     def name(self):
@@ -102,7 +105,7 @@ class DimVar:
 
     @staticmethod
     def eval_name(e):
-        sub_map = [(e, dv.name) for e, dv in DimVar.decls.items()]
+        sub_map = [(e, dv.shortname) for e, dv in DimVar.decls.items()]
         return str(e.subs(sub_map))
 
 class DimExpr:
@@ -120,7 +123,7 @@ class DimExpr:
             self._e = Integer(t)
             self._val = t
         elif isinstance(t, DimVar):
-            self._e, self._val, self.is_dvar = t.exp, t.len, True
+            self._e, self._val, self.is_dvar = t.exp, t.size, True
         elif isinstance(t, DimExpr):
             self._e, self._val, self.is_dvar = t._e, t._val, t.is_dvar
         else:
