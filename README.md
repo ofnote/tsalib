@@ -350,7 +350,8 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 * The [datashape](https://datashape.readthedocs.io/en/latest/) library introduces a generic type system and grammar for structure data. `tsalib` focuses on shapes of homogeneous tensor data types only, with arithmetic support.
 * The [xarray](https://github.com/pydata/xarray) library.
 * The [einops](https://github.com/arogozhnikov/einops) library.
-* The [namedtensor](http://nlp.seas.harvard.edu/NamedTensor) library.
+* The [NamedTensor](http://nlp.seas.harvard.edu/NamedTensor) library.
+* The [TensorNetwork](https://github.com/google/TensorNetwork) library. Generalizes the idea of named axes and composition/decomposition/reordering of axes very nicely.
 
 ## Author
 

@@ -5,8 +5,6 @@
 
 
 import sys
-sys.path.append('../')
-
 import numpy as np
 from tsalib import dim_vars, get_dim_vars
 
