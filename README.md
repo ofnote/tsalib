@@ -4,15 +4,13 @@
 
 Conventional tensor manipulation libraries — `numpy`, `pytorch`, `keras`, `tensorflow`, lack support for *naming* the dimensions of tensor variables. `tsalib` enables using *named dimensions* with existing libraries, using Python's support for *type annotations* and a new *shorthand notation* for naming tensor shapes (**TSN**). 
 
-Why *named dimensions* ?  See [References](#References).
+*Why* named dimensions ?  See [References](#References).
 
 ---
 Using `tsalib`:
 
 * track shapes: label your tensor variables with their **named shapes** (`x: 'btd'` or `x: (B,T,D)`)
-
 * better debugging: write *named* shape **assertions** (`assert x.shape == (B,T,D)`).
-
 * write seamless *named* shape **transformations**:
 
   `warp(x, '(btd)* -> btdl -> bdtl -> b,d//2,t*2,l', 'jpv')`
@@ -64,12 +62,6 @@ size_assert (x.size(), (B,C,H//2,W//2), dims=[1,2,3])
 Write intuitive and crisp shape transformations:
 
 ```python
-from tsalib import permute_transform as pt
-
-# permute: irrelevant dimensions are anonymous (underscores).
-x: 'bchw'
-x1 = x.permute(pt('_c__ -> ___c'))
-assert x1.size() == (B, H, W, C)
 
 # A powerful one-stop `warp` operator to compose multiple transforms inline
 # here: a sequence of a permute ('p') and view ('v') transformations
@@ -105,14 +97,12 @@ def merge_heads_tsalib(x: 'bhtd'):
     res: 'b,t,h*d' = warp(x, 'bhtd -> bthd -> b,t,h*d', 'pcv')
 ```
 
-
-
-Named shapes may be represented as tuples or *shorthand* strings:
+Named shapes may be represented as tuples or *shorthand* strings. Details on shorthand notation [here](notebooks/shorthand.md). 
 
 - a tuple `(B,H,D)` [long form] or a string `'b,h,d'` (or simply `'bhd'`) [shorthand]
 - a string with anonymous dimensions (`',h,'` or `_h_` is a 3-d tensor).
 
-More details on shorthand notation [here](notebooks/shorthand.md) . 
+
 
 ## Installation
 
