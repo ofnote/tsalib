@@ -190,7 +190,7 @@ Because it returns transformed tensors, the `warp` operator is backend library-d
 
 Or, use individual named shape transformations:
 
-```
+```python
 	#use dimension variables directly
 	x = torch.ones(B, T, D)
 	x = x.view(B, T, 4, D//4)
