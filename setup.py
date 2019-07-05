@@ -9,8 +9,8 @@ def get_long_description():
         return f.read()
 
 setuptools.setup(name='tsalib',
-      version='0.2.0',
-      description="TSAlib: Support for Tensor Shape Annotations",
+      version='0.2.1',
+      description="TSAlib: Support for Named Tensor Shapes",
       long_description=get_long_description(),
       long_description_content_type="text/markdown",
       author='Nishant Sinha',
