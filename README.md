@@ -8,6 +8,10 @@ Conventional tensor manipulation libraries — `numpy`, `pytorch`, `keras`, `ten
 
 **Update**: A dynamic shape checker based on tsalib: [tsanley](https://github.com/ofnote/tsanley)
 
+**Update**: Pytorch has recently [introduced](https://pytorch.org/docs/stable/named_tensor.html) support for named shapes in tensors -- naming is *optional* and *lazy*, like in `tsalib`.  This is great news! We hope that tensorflow and numpy (in particular!) will also incorporate named shapes, to make it fundamentally easier for the developer community to write tensor programs .
+
+> `tsalib`’s USP continues to be the [shorthand notation](https://github.com/ofnote/tsalib/blob/master/notebooks/shorthand.md) for writing shape transformations and more importantly, annotating tensor variables.  See discussion [here](https://github.com/pytorch/pytorch/issues/27175). Using shorthands exploits the fact that most dimension names remain the same during the program execution and reduces overhead and program clutter due to shape names. We hope that pytorch and other libraries will also incorporate shorthand shape naming in the near future.
+
 ---
 Using `tsalib`:
 
