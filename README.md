@@ -8,9 +8,7 @@ Conventional tensor manipulation libraries — `numpy`, `pytorch`, `keras`, `ten
 
 **Update**: A dynamic shape checker based on tsalib: [tsanley](https://github.com/ofnote/tsanley)
 
-**Update**: Pytorch has recently [introduced](https://pytorch.org/docs/stable/named_tensor.html) support for named shapes in tensors -- naming is *optional* and *lazy*, like in `tsalib`.  This is great news! We hope that tensorflow and numpy (in particular!) will also incorporate named shapes, to make it fundamentally easier for the developer community to write tensor programs .
 
-> `tsalib`’s USP continues to be the [shorthand notation](https://github.com/ofnote/tsalib/blob/master/notebooks/shorthand.md) for writing shape transformations and more importantly, annotating tensor variables.  See discussion [here](https://github.com/pytorch/pytorch/issues/27175). Using shorthands exploits the fact that most dimension names remain the same during the program execution and reduces overhead and program clutter due to shape names. We hope that pytorch and other libraries will also incorporate shorthand shape naming in the near future.
 
 ---
 Using `tsalib`:
@@ -124,7 +122,7 @@ The [models](models) directory contains tsalib annotations of a few well-known, 
 - [Resnet](models/resnet.py),
 - Contrast models with and without tsalib ([pytorch](models/snippets_pytorch.py), [tensorflow](models/snippets_tf.py)).
 
-With TSAs, we can gain deeper and immediate insight into how the module works by scanning through the `forward` (or equivalent) function.
+With named shape annotations, we can gain deeper and immediate insight into how the module works by scanning through the `forward` (or equivalent) function.
 - `tsalib` is designed to stay light and easy to incorporate into existing workflow with minimal code changes. Choose to use `tsalib` for tensor labels and shape asserts only, or, integrate deeply by using `warp` everywhere in your code.
 - The API includes both library-independent and dependent parts, giving developers flexibility in how they choose to incorporate `tsalib` in their workflow.
 - We've carefully avoided deeper integration into popular tensor libraries to keep `tsalib` light-weight and avoid backend-inflicted bugs.
@@ -282,8 +280,8 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 
 ## References
 
-* Blog [article](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b) introducing TSA.
-* A [proposal](https://docs.google.com/document/d/1vpMse4c6DrWH5rq2tQSx3qwP_m_0lyn-Ij4WHqQqRHY/edit#heading=h.rkj7d39awayl) for designing a tensor library with named dimensions from ground-up. The TSA library takes care of some use cases, without requiring any change in the tensor libraries.
+* Blog [article](https://medium.com/@ekshakhs/introducing-tensor-shape-annotation-library-tsalib-963b5b13c35b) introducing `tsalib`
+* A [proposal](https://docs.google.com/document/d/1vpMse4c6DrWH5rq2tQSx3qwP_m_0lyn-Ij4WHqQqRHY/edit#heading=h.rkj7d39awayl) for designing a tensor library with named dimensions from ground-up. `tsalib` takes care of some use cases, without requiring any change in the tensor libraries.
 * Pytorch Issue on Names Axes [here](https://github.com/pytorch/pytorch/issues/4164).
 * Using [einsum](http://ajcr.net/Basic-guide-to-einsum/) for tensor operations improves productivity and code readability. [blog](https://rockt.github.io/2018/04/30/einsum)
 * The [Tile](https://vertexai-plaidml.readthedocs-hosted.com/en/latest/writing_tile_code.html) DSL uses indices ranging over dimension variables to write compact, library-independent tensor operations.
@@ -294,8 +292,11 @@ For writing type annotations inline, Python >= 3.5 is required which allows opti
 * The [TensorNetwork](https://github.com/google/TensorNetwork) library. Generalizes the idea of named axes and composition/decomposition/reordering of axes very nicely.
 
 
-
 Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pytorch`, `tensorflow`, ...) requires you to carefully keep track of shapes of tensors. In absence of a principled way to *name* tensor dimensions and track shapes, most developers resort to writing adhoc shape comments embedded in code (see code from [google-research/bert](https://github.com/google-research/bert/blob/a21d4848ec33eca7d53dd68710f04c4a4cc4be50/modeling.py#L664)) or spaghetti code with numeric indices: `x.view(* (x.size()[:-2] + (x.size(-2) * x.size(-1),))`. This makes both reading — figuring out `RNN` output shapes, examining/modifying deep pre-trained architectures (`resnet`, `densenet`, `elmo`) — and writing —  designing new kinds of `attention` mechanisms (`multi-head attention`)— deep learning programs harder.
+
+**Update**: Pytorch has recently [introduced](https://pytorch.org/docs/stable/named_tensor.html) support for named shapes in tensors -- naming is *optional* and *lazy*, like in `tsalib`. This is great news! We hope that tensorflow and numpy (in particular!) will also incorporate named shapes, to make it fundamentally easier for the developer community to write tensor programs .
+
+> `tsalib`’s USP continues to be the [shorthand notation](https://github.com/ofnote/tsalib/blob/master/notebooks/shorthand.md) for writing shape transformations and more importantly, annotating tensor variables.  See discussion [here](https://github.com/pytorch/pytorch/issues/27175). Using shorthands exploits the fact that most dimension names remain the same during the program execution and reduces overhead and program clutter due to shape names. We hope that pytorch and other libraries will also incorporate shorthand shape naming in the near future.
 
 <details>
     <summary>
@@ -306,7 +307,7 @@ Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pyt
     * Assertions and annotations remain the same even if the actual dimension sizes change.
     * Faster *debugging*: if you annotate-as-you-go, the tensor variable shapes are explicit in code, readily available for a quick inspection. No more adhoc shape `print`ing when investigating obscure shape errors.
     * Do shape transformations using *shorthand* notation and avoid unwanted shape surgeries.
-    * Use TSAs to improve code clarity everywhere, even in your machine learning data pipelines.
+    * Use named shapes to improve code clarity everywhere, even in your machine learning data pipelines.
     * They serve as useful documentation to help others understand or extend your module.
 </details>
 
@@ -327,7 +328,7 @@ The library is in its early phases. Contributions/feedback welcome!
 * [21 Nov 2018] Added documentation [notebook](notebooks/tsalib.ipynb). 
 * [18 Nov 2018] Support for `warp`, `reduce_dims`. Backend modules for `numpy`, `tensorflow` and `torch` added.
 * [9 Nov 2018] Support for shorthand notation in view/permute/expand transforms.
-* [9 Nov 2018] Support for using TSA in assertions and tensor constructors (cast to integers).
+* [9 Nov 2018] Support for using named shapes in assertions and tensor constructors (cast to integers).
 * [25 Oct 2018] Initial Release
 
 
