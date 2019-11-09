@@ -1,4 +1,7 @@
 
+from tsalib import dim_vars
+from tsalib.backend import get_shape_list
+
 def modeling_embedding_lookup(input_ids: 'bti'):
     # illustrates local dim var usage, i is not declared globaly as dimvar
     B, T, D = dim_vars('B(b):13 L(t):7 D(d):32')
@@ -93,4 +96,5 @@ def transpose_for_scores(input_tensor: 'b*t,d', batch_size: 'b', num_attention_h
 
 ####################
 
+if __name__ == '__main__':
 

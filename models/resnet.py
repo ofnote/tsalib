@@ -6,11 +6,11 @@ import torch.utils.model_zoo as model_zoo
 # Updated to add shape annotations (BasicBlock and ResNet modules)
 
 import sys
-sys.path.append('../')
 from tsalib import dim_vars
 
-B, C, Ci, Co = dim_vars('Batch Channels ChannelsIn ChannelsOut')
-H, W, Ex = dim_vars('Height Width BlockExpansion')
+
+B, C, Ci, Co = dim_vars('Batch(b):10 Channels(c):3 ChannelsIn(ci) ChannelsOut(co)')
+H, W, Ex = dim_vars('Height(h):224 Width(w):224 BlockExpansion(e):1')
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -147,7 +147,6 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x: (B, 3, H, W)): #H = W = 224
-
         x: (B, 64, H//2, W//2) = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -160,7 +159,7 @@ class ResNet(nn.Module):
 
         x: (B, 512*Ex, 1, 1) = self.avgpool(x)
         x: (B, 512*Ex) = x.view(x.size(0), -1)
-        x: (B, num_classes) = self.fc(x)
+        x: (B, NC) = self.fc(x)
 
         return x
 
