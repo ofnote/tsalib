@@ -6,7 +6,10 @@ Conventional tensor manipulation libraries — `numpy`, `pytorch`, `keras`, `ten
 
 *Why* named dimensions ?  See [References](#References).
 
-**Update**: A dynamic shape checker based on tsalib: [tsanley](https://github.com/ofnote/tsanley)
+> **Updates**: 
+
+> * An in-depth [talk](https://speakerdeck.com/ekshaks/the-shape-of-u-befriending-tensors) on tsalib at Anthill 2019.
+> * A dynamic shape checker based on tsalib: [tsanley](https://github.com/ofnote/tsanley)
 
 
 
