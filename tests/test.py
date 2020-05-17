@@ -6,7 +6,7 @@
 
 import sys
 import numpy as np
-from tsalib import dim_vars, get_dim_vars
+from tsalib import dim_vars, get_dim_vars, update_dim_vars_len
 
 
 # # Design Principles
@@ -51,6 +51,18 @@ def test_decls():
     #strict=False allows overwriting previous declarations
     H, W = dim_vars ('Height(h):256 Width(w):256', exists_ok=True) 
     print(f'H, W = {H}, {W}')
+
+    # test update dim var len
+
+    H.update_len(1024)
+    print(f'H = {H}')
+
+    update_dim_vars_len({'h': 512, 'w': 128})
+    H, W = get_dim_vars('h w')
+    print(f'H, W = {H}, {W}')
+
+
+
 
 # Supports arithmetic over a combination of dim vars and other Python variables
 def test_arith():
@@ -444,5 +456,5 @@ def warp_long2 ():
     
     
 warp_long1()
-warp_long2()
+#warp_long2()
 

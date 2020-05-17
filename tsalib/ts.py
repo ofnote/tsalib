@@ -73,6 +73,10 @@ class DimVar:
         if self._name != self._sname: ret += f'({self._sname})'
         return ret
 
+    def update_len(self, new_val):
+        assert isinstance(new_val, int)
+        self._val = new_val
+
     @staticmethod
     def check_decl(sname):
         return Symbol(sname) in DimVar.decls
@@ -84,7 +88,7 @@ class DimVar:
         #print (f'lookup: {sn} {len(DimVar.decls)}')
         if len(DimVar.decls) == 0: 
             assert False
-        assert sn in DimVar.decls, f'DimVar {sn} not declared'
+        assert sn in DimVar.decls, f'DimVar short name {sn} not declared.'
         return DimVar.decls[sn]
 
     @staticmethod
@@ -93,7 +97,7 @@ class DimVar:
         for k, decl in DimVar.decls.items():
             #print ('** lookup2', name, decl._name)
             if decl._name == name: return decl
-        assert False, f'DimVar with name {name} not declared'
+        assert False, f'DimVar full name {name} not declared.'
 
     @staticmethod
     def eval(e):
@@ -116,16 +120,17 @@ class DimExpr:
 
     def __init__(self, t, is_dvar=False):
         self._e = None
-        self.is_dvar = is_dvar # a basic dimension var
+        #self.is_dvar = is_dvar # a basic dimension var
+        self.dim_var = None
         self._val = None #value of dimvar (nan if not set)
 
         if isinstance(t, int):
             self._e = Integer(t)
             self._val = t
         elif isinstance(t, DimVar):
-            self._e, self._val, self.is_dvar = t.exp, t.size, True
+            self._e, self._val, self.dim_var = t.exp, t.size, t
         elif isinstance(t, DimExpr):
-            self._e, self._val, self.is_dvar = t._e, t._val, t.is_dvar
+            self._e, self._val, self.dim_var = t._e, t._val, t.dim_var
         else:
             #print (f'test expr: {v} {repr(type(v))}')
             self._e = t
@@ -137,6 +142,14 @@ class DimExpr:
     @property
     def len(self): 
         return self._val if (self._val != nan) else None
+
+    def update_len(self, new_len):
+        if self.dim_var is None:
+            raise ValueError('Cannot update length of arbitrary dim expression.')
+        else:
+            self.dim_var.update_len(new_len)
+            self._val = new_len
+
 
     def __int__(self): 
         #print(f'called int {self._val}')
@@ -248,9 +261,15 @@ def get_dim_vars_by_long_name(names):
 
 def get_decls (): return DimVar.decls
 
-#def update_dim_var_size ():
-#avoid this function
-#maybe redeclare dim var?
+def update_dim_vars_len (name2len):
+    '''
+    name2len: dictionary with dim var name and new length pairs
+              e.g., {'t': 50, 'c': 256}
+    '''
+    for name, dimlen in name2len.items():
+        d = DimVar.lookup(name)
+        d.update_len(dimlen)
+
 
 def declare_common_dim_vars ():
     B, V, D, Dh = dim_vars('Batch Vocab EmbedDim HiddenDim')

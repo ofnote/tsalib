@@ -318,8 +318,9 @@ Writing deep learning programs which manipulate multi-dim tensors (`numpy`, `pyt
  * Nishant Sinha, [OffNote Labs](http://offnote.co) (nishant@offnote.co, @[medium](https://medium.com/@ekshakhs), @[twitter](https://twitter.com/ekshakhs))
 
 ## Change Log
-The library is in its early phases. Contributions/feedback welcome!
+The library is stable. Contributions/feedback welcome!
 
+* [May 2020] Added `update_dim_vars_len` and `DimExpr.update_len`.
 * [5 Feb 2019] Added `dot` operator.
 * [4 Feb 2019] Added fully annotated and adapted BERT [model](models/bert). More illustrative pytorch and tensorflow snippets.
 * [31 Jan 2019] Added `alignto` operator.
