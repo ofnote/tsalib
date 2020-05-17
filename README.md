@@ -135,7 +135,7 @@ With named shape annotations, we can gain deeper and immediate insight into how 
 ## API
 
 ```python
-from tsalib import dim_vars as dvs, get_dim_vars
+from tsalib import dim_vars as dvs, get_dim_vars, update_dim_vars_len
 import numpy as np
 ```
 ### Declarations
