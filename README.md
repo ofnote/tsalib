@@ -52,7 +52,7 @@ import torch
 #declare dimension variables (from config arguments)
 B, C, H, W = dvs('Batch(b):32 Channels(c):3 Height(h):256 Width(w):256') 
 ...
-# create tensors (pytorch) using dimension variables (interpret dim vars as integers)
+# create tensors using dimension variables (interpret dim vars as integers)
 x: 'bchw' = torch.randn(B, C, H, W)
 x: 'bchw' = tf.get_variable("x", shape=(B, C, H, W), initializer=tf.random_normal_initializer())
 
@@ -164,18 +164,9 @@ H, W = get_dim_vars('h w')
 print(f'H, W = {H}, {W}')  # h:512, w:128
 ```
 
-#### Declare Tensors and Annotate Shapes
+#### Annotate Variables with Shapes
 
-Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` or shorthands throughout your code.
-
-```python
-B, D = dvs('Batch(b):{batch_size} EmbedDim(d):{embed_dim}}')
-#declare a 2-D tensor of shape(48, 300)
-x = torch.randn(B, D)
-#assertions over dimension variables (code unchanged even if dim sizes change)
-assert x.size() == (B, D)
-```
-Or, annotate with shorthand named shapes.
+Annotate with shorthand named shapes.
 
 ```python
 a: 'b,d' = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
@@ -192,16 +183,16 @@ x : 'b,c*2,h//2,w//2' = torch.nn.conv2D(C, C*2, ...)(v)
 
 #### One-stop shape transforms: `warp` operator
 
-The `warp` operator enables squeezing in a **sequence** of shape transformations in a single line using [TSN](notebooks/shorthand.md). The operator takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
+The `warp` operator enables squeezing in a **sequence** of shape transformations in a single line using shorthand notation ([TSN](notebooks/shorthand.md)). `warp` takes in an input tensor, a sequence of shape transformations, and the corresponding transform types (view transform -> 'v', permute transform -> 'p'). 
 
 ```python
     x: 'btd' = torch.randn(B, T, D)
     y = warp(x, 'btd -> b,t,4,d//4 ->  b,4,t,d//4 ', 'vp') #(v)iew, then (p)ermute, transform
     assert(y.shape == (B,4,T,D//4))
 ```
-Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily (see [backend.py](tsalib/backend.py)).
+Because it returns transformed tensors, the `warp` operator is backend library-dependent. Currently supported backends are `numpy`, `tensorflow` and `pytorch`. New backends can be added easily (see [backend.py](tsalib/backend.py)). See docs for transform types [here](notebooks/shorthand.md#warp-transformation).
 
-Or, use individual named shape transformations:
+Or, perform individual transforms using named shapes.
 
 ```python
 	#use dimension variables directly
@@ -273,16 +264,16 @@ Easy `matmult` specification when
 
 `sympy`. A library for building symbolic expressions in Python is the only dependency.
 
-Tested with Python 3.6. Core API should work with Python 2. Contributions welcome.
+Tested with Python 3.6, 3.7.
 
 For writing type annotations inline, Python >= 3.5 is required which allows optional type annotations for variables. These annotations do not affect the program performance in any way. 
 
 
 ## Best Practices
 
-* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start off only with declaring and labeling variables with named shapes and writing shape assertions. This already brings tremendous improvement in productivity and code readability. Once comfortable, use other transformations: `warp`, `join`, etc.
-* Convert all *relevant* config parameters into dimension variables. Use only latter in your code.
-* Define all dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context.
+* `tsalib` is designed for **progressive adoption** with your current deep learning models and pipelines. You can start off only with *declaring* and *labeling* variables with named shapes and writing shape *assertions*. This already brings tremendous improvement in productivity and code readability. Once comfortable, use other transformations: `warp`, `join`, etc.
+* Convert all relevant *config parameters* into dimension variables. Use only latter in your code.
+* Define *most* (if not all) dimension variables upfront -- this requires some discipline. Use `get_dim_vars` to lookup pre-defined dimension variables by their shorthand names in any function context. Update dimension variables dynamically in code with `update_dim_vars_len`.
 * Avoid using `reshape` : use `view` and `transpose` together. An inadvertent `reshape` may not preserve your dimensions (axes). Using `view` to change shape protects against this: it throws an error if the dimensions being manipulated are not contiguous. 
 * Shape *Annotations* vs *Assertions*. Shape labels (`x: (B,T,D)` or `x: 'btd'`) ease shape recall during coding. Shape assertions (`assert x.shape === (B,T,D)`) enable catching inadvertent shape bugs at runtime. Pick either or both to work with.
 
