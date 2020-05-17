@@ -9,7 +9,7 @@ def get_long_description():
         return f.read()
 
 setuptools.setup(name='tsalib',
-      version='0.2.1',
+      version='0.2.2',
       description="TSAlib: Support for Named Tensor Shapes",
       long_description=get_long_description(),
       long_description_content_type="text/markdown",

@@ -137,7 +137,7 @@ import numpy as np
 ```
 ### Declarations
 
-#### Declare Dimension Variables
+#### Declare, Update Dimension Variables
 ```python
 #or declare dim vars with default integer values (optional)
 B, C, D, H, W = dvs('Batch:48 Channels:3 EmbedDim:300 Height Width')
@@ -149,9 +149,21 @@ B, C, D = dvs('Batch(b):{0} Channels(c):{1} EmbedDim(d):{2}'.format(config.batch
 
 ```
 
+**Update** dimension variable length *dynamically*.
+
+```python
+H.update_len(1024)
+print(f'H = {H}') # h:1024
+
+update_dim_vars_len({'h': 512, 'w': 128})
+# ...
+H, W = get_dim_vars('h w')
+print(f'H, W = {H}, {W}')  # h:512, w:128
+```
+
 #### Declare Tensors and Annotate Shapes
 
-Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` or shorthands `b,d` throughout your code.
+Instead of scalar variables `batch_size`, `embed_dim`, use dimension variables `B`, `D` or shorthands throughout your code.
 
 ```python
 B, D = dvs('Batch(b):{batch_size} EmbedDim(d):{embed_dim}}')
@@ -160,17 +172,11 @@ x = torch.randn(B, D)
 #assertions over dimension variables (code unchanged even if dim sizes change)
 assert x.size() == (B, D)
 ```
-
-
+Or, annotate with shorthand named shapes.
 
 ```python
-B, D = get_dim_vars('b d') #lookup pre-declared dim vars
-a: (B, D) = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
-b: (2, B, D) = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
-
-#or simply, use shorthand shapes
-a: 'b,d'
-b: '2bd'
+a: 'b,d' = np.array([[1., 2., 3.], [10., 9., 8.]]) #(Batch, EmbedDim): (2, 3)
+b: '2bd' = np.stack([a, a]) #(2, Batch, EmbedDim): (2, 2, 3)
 ```
 Annotations are optional and do not affect program performance. Arithmetic over dimension variables is supported. This enables easy tracking of shape changes across neural network layers.
 
