@@ -6,9 +6,9 @@ Conventional tensor manipulation libraries — `numpy`, `pytorch`, `keras`, `ten
 
 *Why* named dimensions ?  See [References](#References).
 
-> **Updates**: 
+**Updates**: 
 
-> * An in-depth [talk](https://speakerdeck.com/ekshaks/the-shape-of-u-befriending-tensors) on tsalib at Anthill 2019.
+> * **The Shape of U**. An in-depth [talk](https://speakerdeck.com/ekshaks/the-shape-of-u-befriending-tensors) on tsalib at Anthill 2019. 
 > * A dynamic shape checker based on tsalib: [tsanley](https://github.com/ofnote/tsanley)
 
 
@@ -49,7 +49,8 @@ from tsalib import dim_vars as dvs, size_assert
 import tensorflow as tf
 import torch
 
-#declare dimension variables (from config arguments)
+# declare dimension variables. e.g., full name 'Batch', shorthand 'b', length 32.
+# Simply use the shorthand 'b' in rest of the code.
 B, C, H, W = dvs('Batch(b):32 Channels(c):3 Height(h):256 Width(w):256') 
 ...
 # create tensors using dimension variables (interpret dim vars as integers)
@@ -73,6 +74,7 @@ Write intuitive and crisp shape transformations:
 # A powerful one-stop `warp` operator to compose multiple transforms inline
 # here: a sequence of a permute ('p') and view ('v') transformations
 y = warp(x1, 'bhwc -> bchw -> b*c,h,w', 'pv')
+B, C, H, W = get_dim_vars('b c h w')
 assert y.size() == (B*C,H,W)
 
 #or, the same transformation sequence with anonymous dims
